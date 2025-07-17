@@ -27,11 +27,6 @@ class Users
     #[ORM\Column(length: 255)]
     private ?string $color = null;
 
-    /**
-     * @var Collection<int, Invoice>
-     */
-    #[ORM\OneToMany(targetEntity: Invoice::class, mappedBy: 'nameUser')]
-    private Collection $invoices;
 
     /**
      * @var Collection<int, Stockmovement>
@@ -42,10 +37,15 @@ class Users
     #[ORM\ManyToOne(inversedBy: 'users')]
     private ?Contact $contact = null;
 
+    /**
+     * @var Collection<int, Invoice>
+     */
+    #[ORM\OneToMany(targetEntity: Invoice::class, mappedBy: 'cashier')]
+    private Collection $invoices;
+
     public function __construct()
-    {
-        $this->invoices = new ArrayCollection();
-        $this->stockmovements = new ArrayCollection();
+    {        $this->stockmovements = new ArrayCollection();
+    $this->invoices = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -101,35 +101,9 @@ class Users
         return $this;
     }
 
-    /**
-     * @return Collection<int, Invoice>
-     */
-    public function getInvoices(): Collection
-    {
-        return $this->invoices;
-    }
+   
 
-    public function addInvoice(Invoice $invoice): static
-    {
-        if (!$this->invoices->contains($invoice)) {
-            $this->invoices->add($invoice);
-            $invoice->setNameUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeInvoice(Invoice $invoice): static
-    {
-        if ($this->invoices->removeElement($invoice)) {
-            // set the owning side to null (unless already changed)
-            if ($invoice->getNameUser() === $this) {
-                $invoice->setNameUser(null);
-            }
-        }
-
-        return $this;
-    }
+    
 
     /**
      * @return Collection<int, Stockmovement>
@@ -169,6 +143,36 @@ class Users
     public function setContact(?Contact $contact): static
     {
         $this->contact = $contact;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Invoice>
+     */
+    public function getInvoices(): Collection
+    {
+        return $this->invoices;
+    }
+
+    public function addInvoice(Invoice $invoice): static
+    {
+        if (!$this->invoices->contains($invoice)) {
+            $this->invoices->add($invoice);
+            $invoice->setCashier($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInvoice(Invoice $invoice): static
+    {
+        if ($this->invoices->removeElement($invoice)) {
+            // set the owning side to null (unless already changed)
+            if ($invoice->getCashier() === $this) {
+                $invoice->setCashier(null);
+            }
+        }
 
         return $this;
     }
