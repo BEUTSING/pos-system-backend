@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Controller\Securitycontroleur;
+
+use App\Entity\User;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasher;
+
+;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\Validator\Constraints\UserPassword;
+
+final class RegisterController extends AbstractController
+{
+    #[Route('/api/register', name: 'app_register', methods: ['POST'])]
+    public function register(Request $request,EntityManagerInterface $em,UserPasswordHasher $passwordHasher): JsonResponse
+    {
+        $data=json_decode($request->getContent(), true);
+        
+        $user=new User();
+        $user->setEmail($data['email']);
+        $user->setPassword($passwordHasher->hashPassword($user, $data['password']));
+
+        $em->persist($user);
+        $em->flush();
+        return new JsonResponse(['status=> User created'],Response::HTTP_CREATED);
+    }
+}
