@@ -29,8 +29,6 @@ class Stockmovement
     #[ORM\Column(length: 255)]
     private ?string $reason = null;
 
-    #[ORM\ManyToOne(inversedBy: 'stockmovements')]
-    private ?Users $username = null;
 
     public function getId(): ?int
     {
@@ -97,15 +95,4 @@ class Stockmovement
         return $this;
     }
 
-    public function getUsername(): ?Users
-    {
-        return $this->username;
-    }
-
-    public function setUsername(?Users $username): static
-    {
-        $this->username = $username;
-
-        return $this;
-    }
 }

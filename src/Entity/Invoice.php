@@ -35,10 +35,6 @@ class Invoice
     #[ORM\ManyToOne(inversedBy: 'invoices')]
     private ?Customer $customernam = null;
 
-    #[ORM\ManyToOne(inversedBy: 'invoices')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Users $cashier = null;
-
    
     public function getId(): ?int
     {
@@ -129,17 +125,5 @@ class Invoice
         return $this;
     }
 
-    public function getCashier(): ?Users
-    {
-        return $this->cashier;
-    }
 
-    public function setCashier(?Users $cashier): static
-    {
-        $this->cashier = $cashier;
-
-        return $this;
-    }
-
-   
 }

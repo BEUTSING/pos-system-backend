@@ -27,9 +27,7 @@ class Contact
     /**
      * @var Collection<int, Users>
      */
-    #[ORM\OneToMany(targetEntity: Users::class, mappedBy: 'contact')]
-    private Collection $users;
-
+   
     /**
      * @var Collection<int, Supplier>
      */
@@ -44,7 +42,6 @@ class Contact
 
     public function __construct()
     {
-        $this->users = new ArrayCollection();
         $this->suppliers = new ArrayCollection();
         $this->customers = new ArrayCollection();
     }
@@ -90,35 +87,7 @@ class Contact
         return $this;
     }
 
-    /**
-     * @return Collection<int, Users>
-     */
-    public function getUsers(): Collection
-    {
-        return $this->users;
-    }
-
-    public function addUser(Users $user): static
-    {
-        if (!$this->users->contains($user)) {
-            $this->users->add($user);
-            $user->setContact($this);
-        }
-
-        return $this;
-    }
-
-    public function removeUser(Users $user): static
-    {
-        if ($this->users->removeElement($user)) {
-            // set the owning side to null (unless already changed)
-            if ($user->getContact() === $this) {
-                $user->setContact(null);
-            }
-        }
-
-        return $this;
-    }
+  
 
     /**
      * @return Collection<int, Supplier>
