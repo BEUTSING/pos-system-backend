@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Entity;
+namespace App\Entity\Report;
 
 use App\Repository\DocumentRepository;
 use Doctrine\ORM\Mapping as ORM;

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Controller\Securitycontroleur;
+namespace App\Controller\SecurityController;
 
-use App\Entity\User;
+use App\Entity\Security\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -27,10 +27,16 @@ final class LoginController extends AbstractController
          $user= $entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
 
          if(!$user || !$passwordHarsher->isPasswordValid($user, $password)){
-            return new JsonResponse(['error' => 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
-
+            return new JsonResponse(['error' => 'Please check your email and password.'], Response::HTTP_UNAUTHORIZED);
          }
          $token= $JWTManager->create($user);
             return new JsonResponse(['token' => $token], Response::HTTP_OK);
     }
+
+    #[Route('/api/logout', name: 'app_logout', methods: ['POST'])]
+    public function logout(): JsonResponse
+    {
+        return new JsonResponse(['message' => 'Logged out successfully'], Response::HTTP_OK);
+    }
+
 }

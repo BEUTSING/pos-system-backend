@@ -1,7 +1,13 @@
 <?php
 
-namespace App\Entity;
+namespace App\Entity\Product;
 
+use App\Entity\Checkout\Invoice;
+use App\Entity\Checkout\Sale;
+use App\Entity\Checkout\Shelf;
+use App\Entity\Purchaseorder;
+use App\Entity\Stock;
+use App\Entity\Stock\Stockmovement;
 use App\Repository\ProductRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -37,7 +43,7 @@ class Product
     /**
      * @var Collection<int, Stock>
      */
-    #[ORM\OneToMany(targetEntity: Stock::class, mappedBy: 'productst')]
+    #[ORM\OneToMany(targetEntity: Stock::class, mappedBy: 'product')]
     private Collection $stocks;
 
     /**

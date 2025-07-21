@@ -18,15 +18,44 @@ doctrine:
             Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
         auto_mapping: true
         mappings:
-            App:
+            Security:
                 type: attribute
                 is_bundle: false
-                dir: '%kernel.project_dir%/src/Entity'
-                prefix: 'App\Entity'
-                alias: App
+                dir: '%kernel.project_dir%/src/Entity/Security'
+                prefix: 'App\Entity\Security'
+                alias: Security
+            Checkout:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Entity/Checkout'
+                prefix: 'App\Entity\Checkout'
+                alias: Checkout
+            Product:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Entity/Product'
+                prefix: 'App\Entity\Product'
+                alias: Product
+            Report:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Entity/Report'
+                prefix: 'App\Entity\Report'
+                alias: Report 
+            Shared:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Entity/Shared'
+                prefix: 'App\Entity\Shared'
+                alias: Shared
+            Stock:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Entity/Stock'
+                prefix: 'App\Entity\Stock'
+                alias: Stock
         controller_resolver:
             auto_mapping: false
-
 when@test:
     doctrine:
         dbal:

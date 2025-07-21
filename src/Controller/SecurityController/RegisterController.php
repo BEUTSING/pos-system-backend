@@ -1,23 +1,23 @@
 <?php
 
-namespace App\Controller\Securitycontroleur;
+namespace App\Controller\SecurityController;
 
-use App\Entity\User;
+use App\Entity\Security\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasher;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 ;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Core\Validator\Constraints\UserPassword;
+use \Component\Security\Core\Validator\Constraints\UserPassword;
 
 final class RegisterController extends AbstractController
 {
     #[Route('/api/register', name: 'app_register', methods: ['POST'])]
-    public function register(Request $request,EntityManagerInterface $em,UserPasswordHasher $passwordHasher): JsonResponse
+    public function register(Request $request,EntityManagerInterface $em,UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $data=json_decode($request->getContent(), true);
         
@@ -27,6 +27,6 @@ final class RegisterController extends AbstractController
 
         $em->persist($user);
         $em->flush();
-        return new JsonResponse(['status=> User created'],Response::HTTP_CREATED);
+        return new JsonResponse(['status=> The user has been created successfully'],Response::HTTP_CREATED);
     }
 }
