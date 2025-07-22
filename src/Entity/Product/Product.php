@@ -5,9 +5,9 @@ namespace App\Entity\Product;
 use App\Entity\Checkout\Invoice;
 use App\Entity\Checkout\Sale;
 use App\Entity\Checkout\Shelf;
-use App\Entity\Purchaseorder;
-use App\Entity\Stock;
+use App\Entity\Stock\Purchaseorder;
 use App\Entity\Stock\Stockmovement;
+use App\Entity\Traits\TimestampableTrait;
 use App\Repository\ProductRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -15,8 +15,11 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
+#[ORM\HasLifecycleCallbacks]
+
 class Product
 {
+    Use TimestampableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -40,12 +43,7 @@ class Product
     #[ORM\OneToMany(targetEntity: Stockmovement::class, mappedBy: 'product')]
     private Collection $stockmovements;
 
-    /**
-     * @var Collection<int, Stock>
-     */
-    #[ORM\OneToMany(targetEntity: Stock::class, mappedBy: 'product')]
-    private Collection $stocks;
-
+    
     /**
      * @var Collection<int, Sale>
      */
@@ -64,10 +62,24 @@ class Product
     #[ORM\OneToMany(targetEntity: Purchaseorder::class, mappedBy: 'productname')]
     private Collection $purchaseorders;
 
+    #[ORM\Column]
+    private ?int $quantity = null;
+
+    #[ORM\Column]
+    private ?int $ninimumstock = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $supplier = null;
+
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 0)]
+    private ?string $priceby = null;
+
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 0)]
+    private ?string $pricesale = null;
+
     public function __construct()
     {
         $this->stockmovements = new ArrayCollection();
-        $this->stocks = new ArrayCollection();
         $this->sales = new ArrayCollection();
         $this->invoices = new ArrayCollection();
         $this->purchaseorders = new ArrayCollection();
@@ -156,35 +168,7 @@ class Product
         return $this;
     }
 
-    /**
-     * @return Collection<int, Stock>
-     */
-    public function getStocks(): Collection
-    {
-        return $this->stocks;
-    }
 
-    public function addStock(Stock $stock): static
-    {
-        if (!$this->stocks->contains($stock)) {
-            $this->stocks->add($stock);
-            $stock->setProductst($this);
-        }
-
-        return $this;
-    }
-
-    public function removeStock(Stock $stock): static
-    {
-        if ($this->stocks->removeElement($stock)) {
-            // set the owning side to null (unless already changed)
-            if ($stock->getProductst() === $this) {
-                $stock->setProductst(null);
-            }
-        }
-
-        return $this;
-    }
 
     /**
      * @return Collection<int, Sale>
@@ -272,6 +256,66 @@ class Product
                 $purchaseorder->setProductname(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getQuantity(): ?int
+    {
+        return $this->quantity;
+    }
+
+    public function setQuantity(int $quantity): static
+    {
+        $this->quantity = $quantity;
+
+        return $this;
+    }
+
+    public function getNinimumstock(): ?int
+    {
+        return $this->ninimumstock;
+    }
+
+    public function setNinimumstock(int $ninimumstock): static
+    {
+        $this->ninimumstock = $ninimumstock;
+
+        return $this;
+    }
+
+    public function getSupplier(): ?string
+    {
+        return $this->supplier;
+    }
+
+    public function setSupplier(string $supplier): static
+    {
+        $this->supplier = $supplier;
+
+        return $this;
+    }
+
+    public function getPriceby(): ?string
+    {
+        return $this->priceby;
+    }
+
+    public function setPriceby(string $priceby): static
+    {
+        $this->priceby = $priceby;
+
+        return $this;
+    }
+
+    public function getPricesale(): ?string
+    {
+        return $this->pricesale;
+    }
+
+    public function setPricesale(string $pricesale): static
+    {
+        $this->pricesale = $pricesale;
 
         return $this;
     }

@@ -1,13 +1,13 @@
 security:
     password_hashers:
-        App\Entity\User:
+        App\Entity\Security\User:
             algorithm: auto
 
 
     providers:
         app_user_provider:
             entity:
-                class: App\Entity\User
+                class: App\Entity\Security\User
                 property: email
         # used to reload user from session & other features (e.g. switch_user)
 

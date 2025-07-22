@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Entity;
+namespace App\Entity\Stock;
 
 use App\Repository\StockRepository;
 use Doctrine\ORM\Mapping as ORM;
@@ -13,9 +13,7 @@ class Stock
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'stocks')]
-    private ?Product $productst = null;
-
+   
     #[ORM\Column]
     private ?int $quantityst = null;
 
@@ -27,17 +25,7 @@ class Stock
         return $this->id;
     }
 
-    public function getProductst(): ?Product
-    {
-        return $this->productst;
-    }
-
-    public function setProductst(?Product $productst): static
-    {
-        $this->productst = $productst;
-
-        return $this;
-    }
+   
 
     public function getQuantityst(): ?int
     {

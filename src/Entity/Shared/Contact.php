@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Entity\Share;
+namespace App\Entity\Shared;
 
 use App\Entity\Checkout\Customer;
-use App\Entity\Supplier;
+use App\Entity\Stock\Supplier;
 use App\Repository\ContactRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ContactRepository::class)]
 class Contact
@@ -23,7 +24,8 @@ class Contact
     #[ORM\Column(length: 255)]
     private ?string $city = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(type:'string',length: 255,unique: true)]
+    #[Assert\NotBlank(message:'The email address is required.')]
     private ?string $Email = null;
 
     /**

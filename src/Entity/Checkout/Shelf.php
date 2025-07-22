@@ -2,7 +2,6 @@
 
 namespace App\Entity\Checkout;
 
-use App\Entity\Product;
 use App\Entity\Product\Product;
 use App\Repository\ShelfRepository;
 use Doctrine\Common\Collections\ArrayCollection;

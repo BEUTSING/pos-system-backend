@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Entity;
+namespace App\Entity\Stock;
 
+use App\Entity\Shared\Contact;
 use App\Repository\SupplierRepository;
 use Doctrine\ORM\Mapping as ORM;
 

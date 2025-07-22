@@ -2,11 +2,12 @@
 
 namespace App\Entity\Checkout;
 
-use App\Entity\Share\Contact;
+use App\Entity\Shared\Contact;
 use App\Repository\CustomerRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Query\AST\Functions\ConcatFunction;
 
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
 class Customer
@@ -23,7 +24,7 @@ class Customer
     private Collection $invoices;
 
     #[ORM\ManyToOne(inversedBy: 'customers')]
-    private ?Contact $contact = null;
+    private ?Customer $contact = null;
 
     public function __construct()
     {
