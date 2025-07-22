@@ -1,23 +1,23 @@
 <?php
 
-namespace App\Repository;
+namespace App\Repository\Stock;
 
-use App\Entity\Sale;
+use App\Entity\Stock\Stockmovement;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Sale>
+ * @extends ServiceEntityRepository<Stockmovement>
  */
-class SaleRepository extends ServiceEntityRepository
+class StockmovementRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Sale::class);
+        parent::__construct($registry, Stockmovement::class);
     }
 
     //    /**
-    //     * @return Sale[] Returns an array of Sale objects
+    //     * @return Stockmovement[] Returns an array of Stockmovement objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -31,7 +31,7 @@ class SaleRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?Sale
+    //    public function findOneBySomeField($value): ?Stockmovement
     //    {
     //        return $this->createQueryBuilder('s')
     //            ->andWhere('s.exampleField = :val')

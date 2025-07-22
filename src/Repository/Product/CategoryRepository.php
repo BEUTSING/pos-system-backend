@@ -1,23 +1,23 @@
 <?php
 
-namespace App\Repository;
+namespace App\Repository\Product;
 
-use App\Entity\Contact;
+use App\Entity\Product\Category;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Centact>
+ * @extends ServiceEntityRepository<Category>
  */
-class ContactRepository extends ServiceEntityRepository
+class CategoryRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Contact::class);
+        parent::__construct($registry, Category::class);
     }
 
     //    /**
-    //     * @return Contact[] Returns an array of Contact objects
+    //     * @return Category[] Returns an array of Category objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -31,7 +31,7 @@ class ContactRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?Contact
+    //    public function findOneBySomeField($value): ?Category
     //    {
     //        return $this->createQueryBuilder('c')
     //            ->andWhere('c.exampleField = :val')

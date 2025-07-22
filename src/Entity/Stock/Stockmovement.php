@@ -3,13 +3,15 @@
 namespace App\Entity\Stock;
 
 use App\Entity\Product\Product;
-use App\Repository\StockmovementRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Traits\TimestampableTrait;
+use App\Repository\Stock\StockmovementRepository;
 
 #[ORM\Entity(repositoryClass: StockmovementRepository::class)]
 class Stockmovement
 {
+    use TimestampableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

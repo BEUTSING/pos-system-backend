@@ -3,7 +3,7 @@
 namespace App\Entity\Checkout;
 
 use App\Entity\Product\Product;
-use App\Repository\ShelfRepository;
+use App\Repository\Checkout\ShelfRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;

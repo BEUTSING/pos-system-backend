@@ -3,7 +3,7 @@
 namespace App\Entity\Stock;
 
 use App\Entity\Shared\Contact;
-use App\Repository\SupplierRepository;
+use App\Repository\Stock\SupplierRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SupplierRepository::class)]

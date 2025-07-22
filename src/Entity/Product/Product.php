@@ -8,7 +8,8 @@ use App\Entity\Checkout\Shelf;
 use App\Entity\Stock\Purchaseorder;
 use App\Entity\Stock\Stockmovement;
 use App\Entity\Traits\TimestampableTrait;
-use App\Repository\ProductRepository;
+use App\Repository\Product\ProductRepository;
+
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;

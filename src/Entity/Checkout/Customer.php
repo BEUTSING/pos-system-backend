@@ -3,13 +3,13 @@
 namespace App\Entity\Checkout;
 
 use App\Entity\Shared\Contact;
-use App\Repository\CustomerRepository;
+use App\Repository\Checkout\CustomerRepository ;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Query\AST\Functions\ConcatFunction;
 
-#[ORM\Entity(repositoryClass: CustomerRepository::class)]
+#[ORM\Entity(repositoryClass:CustomerRepository::class)]
 class Customer
 {
     #[ORM\Id]

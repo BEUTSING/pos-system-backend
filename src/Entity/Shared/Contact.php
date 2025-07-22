@@ -4,7 +4,7 @@ namespace App\Entity\Shared;
 
 use App\Entity\Checkout\Customer;
 use App\Entity\Stock\Supplier;
-use App\Repository\ContactRepository;
+use App\Repository\Shared\ContactRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
