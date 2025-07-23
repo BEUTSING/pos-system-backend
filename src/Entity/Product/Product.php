@@ -9,7 +9,6 @@ use App\Entity\Stock\Purchaseorder;
 use App\Entity\Stock\Stockmovement;
 use App\Entity\Traits\TimestampableTrait;
 use App\Repository\Product\ProductRepository;
-
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -48,7 +47,7 @@ class Product
     /**
      * @var Collection<int, Sale>
      */
-    #[ORM\OneToMany(targetEntity: Sale::class, mappedBy: 'produit')]
+    #[ORM\OneToMany(targetEntity: Sale::class, mappedBy: 'product')]
     private Collection $sales;
 
     /**
@@ -180,7 +179,7 @@ class Product
     {
         if (!$this->sales->contains($sale)) {
             $this->sales->add($sale);
-            $sale->setProduit($this);
+            $sale->setProduct($this);
         }
 
         return $this;
@@ -190,8 +189,8 @@ class Product
     {
         if ($this->sales->removeElement($sale)) {
             // set the owning side to null (unless already changed)
-            if ($sale->getProduit() === $this) {
-                $sale->setProduit(null);
+            if ($sale->getProduct() === $this) {
+                $sale->setProduct(null);
             }
         }
 

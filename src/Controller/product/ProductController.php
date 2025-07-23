@@ -49,8 +49,8 @@ final class ProductController extends AbstractController
         $product->setSaleprice($data['saleprice']);
         $product->setPurchaseprice($data['purchaseprice']);
         $product->setQuantity($data['quantity']);
-        $product->setMinimumstock($data['minimumstock']);
         $product->setShelf($data['shelf']);
+        $product->setMinimumstock($data['minimumstock']);
          $em->persist($product);
         $em->flush();
 

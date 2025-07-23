@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\product;
+namespace App\Controller\Stock;
 
 use App\Entity\Stock\Stockmovement;
 use App\Repository\Product\ProductRepository;
@@ -25,11 +25,11 @@ final class StockmovementController extends AbstractController
     }
 
     #[Route('', name: 'app_stockmovement_create', methods: ['POST'])]
-    public function create(Stockmovement $movement, EntityManagerInterface $em, Request $request,ProductRepository $productRepository): JsonResponse
+    public function create(Stockmovement $movement, EntityManagerInterface $em, Request $request,ProductRepository $productrepository): JsonResponse
     {
         $data= json_decode($request->getContent(), true);
 
-         $product = $productRepository->find($data['product']);
+         $product = $productrepository->find($data['product']);
         if (!$product) {
             return $this->json(['error' => 'Product not found'], Response::HTTP_NOT_FOUND);}
 
@@ -37,6 +37,7 @@ final class StockmovementController extends AbstractController
         $movement->setProduct($product);
         $movement->setQuantity($data['quantity']);
         $movement->setTypemovement($data['typemovement']);
+        $movement->setReason($data['reason']);
 
 
         $em->persist($movement);
@@ -45,15 +46,21 @@ final class StockmovementController extends AbstractController
     }
 
 #[Route('/{id}', name: 'app_stockmovement_update', methods: ['POST'])]
-    public function update(Stockmovement $movement, EntityManagerInterface $em, Request $request): JsonResponse
+    public function update(Stockmovement $movement, EntityManagerInterface $em, Request $request, ProductRepository $productrepository): JsonResponse
     {
         $data= Json_decode($request->getContent(), true);
-
-        $movement->setProduct($data['product']?? $movement->getProduct());
+        
+         if(isset($data['product'])){
+            $product = $productrepository->find($data['product']);
+            if (!$product) {
+                return $this->json(['error' => 'Product not found'], Response::HTTP_NOT_FOUND);
+            }
+            $movement->setProduct($product);
+        }
         $movement->setQuantity($data['quantity']??$movement->getQuantity());
         $movement->setTypemovement($data['typemovement']?? $movement->getTypemovement());
+        $movement->setReason($data['reason']?? $movement->getReason());
 
-        $em->persist($movement);
         $em->flush();
         return $this->json($movement, Response::HTTP_OK);
     }

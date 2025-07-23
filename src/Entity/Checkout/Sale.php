@@ -12,6 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: SaleRepository::class)]
 class Sale
 {
+    
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -19,7 +20,7 @@ class Sale
 
     #[ORM\ManyToOne(inversedBy: 'sales')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Product $produit = null;
+    private ?Product $product = null;
 
     #[ORM\Column]
     private ?int $quantity = null;
@@ -49,14 +50,14 @@ class Sale
         return $this->id;
     }
 
-    public function getProduit(): ?Product
+    public function getProduct(): ?Product
     {
-        return $this->produit;
+        return $this->product;
     }
 
-    public function setProduit(?Product $produit): static
+    public function setProduct(?Product $product): static
     {
-        $this->produit = $produit;
+        $this->product = $product;
 
         return $this;
     }
