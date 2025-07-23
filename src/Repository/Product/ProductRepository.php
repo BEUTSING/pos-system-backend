@@ -15,7 +15,15 @@ class ProductRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Product::class);
     }
-
+    public function findByName($pname): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.productname LIKE :val')
+            ->setParameter('val', '%' . $pname . '%')
+            ->orderBy('p.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
     //    /**
     //     * @return Product[] Returns an array of Product objects
     //     */

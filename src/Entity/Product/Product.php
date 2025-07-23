@@ -67,7 +67,7 @@ class Product
     private ?int $quantity = null;
 
     #[ORM\Column]
-    private ?int $ninimumstock = null;
+    private ?int $minimumstock = null;
 
     #[ORM\Column(length: 255)]
     private ?string $supplier = null;
@@ -270,14 +270,14 @@ class Product
         return $this;
     }
 
-    public function getNinimumstock(): ?int
+    public function getMinimumstock(): ?int
     {
-        return $this->ninimumstock;
+        return $this->minimumstock;
     }
 
-    public function setNinimumstock(int $ninimumstock): static
+    public function setMinimumstock(int $minimumstock): static
     {
-        $this->ninimumstock = $ninimumstock;
+        $this->minimumstock = $minimumstock;
 
         return $this;
     }

@@ -14,13 +14,16 @@ use Symfony\Component\Routing\Attribute\Route;
 final class CategoryController extends AbstractController
 {
 
-// code de recherhce de categorie
-//       #[Route('/category/search/{cname}', name: 'app_category_search', methods: ['GET'])]
-//      public function search(CategoryRepository $repo, string $cname): JsonResponse
-//  {
-//      $categories = $repo->findCategory($cname);
-//      return $this->json($categories, Response::HTTP_OK);
-//      }
+// search category
+      #[Route('/category/search/{cname}', name: 'app_category_search', methods: ['GET'])]
+     public function search(CategoryRepository $repo, string $cname): JsonResponse
+ {
+     $categories = $repo->findCategory($cname);
+        if (!$categories) {
+            return $this->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        }
+     return $this->json($categories, Response::HTTP_OK);
+     }
 
         #[Route('/category', name: 'app_category_display', methods: ['GET'])]
 public function display(CategoryRepository $repo): JsonResponse

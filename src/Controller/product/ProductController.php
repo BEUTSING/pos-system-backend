@@ -15,6 +15,15 @@ use Symfony\Component\Routing\Attribute\Route;
 final class ProductController extends AbstractController
 {
    
+    #[Route('/product/search/{pname}', name: 'app_product_search', methods: ['GET'])]
+    public function search(ProductRepository $repo, string $pname): JsonResponse
+    {
+        $products = $repo->findBy(['productname' => $pname]);
+        if (!$products) {
+            return $this->json(['error' => 'Product not found'], Response::HTTP_NOT_FOUND);
+        }
+        return $this->json($products, Response::HTTP_OK);
+    }
 
     #[Route('/product', name: 'app_product_display', methods: ['GET'])]
     public function display(ProductRepository $repos): JsonResponse
@@ -39,6 +48,8 @@ final class ProductController extends AbstractController
         $product->setSupplier($data['supplier']);
         $product->setSaleprice($data['saleprice']);
         $product->setPurchaseprice($data['purchaseprice']);
+        $product->setQuantity($data['quantity']);
+        $product->setMinimumstock($data['minimumstock']);
         $product->setShelf($data['shelf']);
          $em->persist($product);
         $em->flush();
@@ -59,10 +70,11 @@ final class ProductController extends AbstractController
         }
 
         $product->setProductname($data['productname'] ?? $product->getProductname());
-        $product->setCategory($data['category'] ?? $product->getCategory());
         $product->setSupplier($data['supplier'] ?? $product->getSupplier());
         $product->setSaleprice($data['saleprice'] ?? $product->getSaleprice());
         $product->setPurchaseprice($data['purchaseprice'] ?? $product->getPurchaseprice());
+        $product->setMinimumstock($data['minimumstock']?? $product->getMinimumstock());
+        $product->setQuantity($data['quantity'] ?? $product->getQuantity());
         $product->setShelf($data['shelf'] ?? $product->getShelf());
 
         $em->flush();
