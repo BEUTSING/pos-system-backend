@@ -15,6 +15,16 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/sale')]
 final class SaleController extends AbstractController
 {
+    #[Route('/search/{sname}', name: 'app_sale_search', methods: ['GET'])]
+    public function search(SaleRepository $repo, string $sname): JsonResponse
+    {
+        $sales = $repo->findBy(['datesale' => $sname]);
+        if (!$sales) {
+            return $this->json(['error' => 'Sale not found'], Response::HTTP_NOT_FOUND);
+        }
+        return $this->json($sales, Response::HTTP_OK);
+    }
+
     #[Route('', name: 'app_sale_display',methods:['GET'])]
     public function display( SaleRepository $salerepo): JsonResponse
     {
@@ -56,7 +66,7 @@ final class SaleController extends AbstractController
             $sale->setProduct($product);
         }
         $sale->setQuantity($data['quantity']??$sale->getQuantity());
-         $sale->setDatesale($data['datesale']??$sale->getDatesale());
+        $sale->setDatesale($data['datesale']??$sale->getDatesale());
         $sale->setSaleprice($data['saleprice']??$sale->getSaleprice());
         $sale->setTotal($data['total']??$sale->getTotal());
        
