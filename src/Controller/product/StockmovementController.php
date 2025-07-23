@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\SecurityController;
+namespace App\Controller\product;
 
 use App\Entity\Stock\Stockmovement;
 use App\Repository\Product\ProductRepository;
@@ -12,19 +12,19 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
- #[Route('/api/stock-movement')]
+ #[Route('/stock-movement')]
 final class StockmovementController extends AbstractController
 {
 
     
-    #[Route('', name: 'app_display', methods: ['GET'])]
+    #[Route('', name: 'app_stockmovement_display', methods: ['GET'])]
     public function display(StockmovementRepository $repo): JsonResponse
     {
         $stockMovements = $repo->findAll();
         return $this->json($stockMovements, Response::HTTP_OK);
     }
 
-    #[Route('', name: 'app_create', methods: ['POST'])]
+    #[Route('', name: 'app_stockmovement_create', methods: ['POST'])]
     public function create(Stockmovement $movement, EntityManagerInterface $em, Request $request,ProductRepository $productRepository): JsonResponse
     {
         $data= json_decode($request->getContent(), true);
@@ -44,7 +44,7 @@ final class StockmovementController extends AbstractController
         return $this->json($movement, Response::HTTP_CREATED);
     }
 
-#[Route('/{id}', name: 'app_update', methods: ['POST'])]
+#[Route('/{id}', name: 'app_stockmovement_update', methods: ['POST'])]
     public function update(Stockmovement $movement, EntityManagerInterface $em, Request $request): JsonResponse
     {
         $data= Json_decode($request->getContent(), true);
@@ -57,7 +57,7 @@ final class StockmovementController extends AbstractController
         $em->flush();
         return $this->json($movement, Response::HTTP_OK);
     }
-    #[Route('/{id}', name: 'app_delete', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'app_stockmovement_delete', methods: ['DELETE'])]
     public function delete(Stockmovement $movement, EntityManagerInterface $em): JsonResponse
     {
         $em->remove($movement);

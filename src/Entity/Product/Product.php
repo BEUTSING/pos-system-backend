@@ -73,10 +73,7 @@ class Product
     private ?string $supplier = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 0)]
-    private ?string $priceby = null;
-
-    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 0)]
-    private ?string $pricesale = null;
+    private ?string $saleprice = null;
 
     public function __construct()
     {
@@ -297,26 +294,14 @@ class Product
         return $this;
     }
 
-    public function getPriceby(): ?string
+    public function getSaleprice (): ?string
     {
-        return $this->priceby;
+        return $this->saleprice;
     }
 
-    public function setPriceby(string $priceby): static
+    public function setSaleprice(string $saleprice): static
     {
-        $this->priceby = $priceby;
-
-        return $this;
-    }
-
-    public function getPricesale(): ?string
-    {
-        return $this->pricesale;
-    }
-
-    public function setPricesale(string $pricesale): static
-    {
-        $this->pricesale = $pricesale;
+        $this->saleprice =$saleprice;
 
         return $this;
     }

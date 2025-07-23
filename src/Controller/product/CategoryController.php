@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\SecurityController;
+namespace App\Controller\product;
 
 use App\Entity\Product\Category;
 use App\Repository\Product\CategoryRepository;
@@ -15,21 +15,21 @@ final class CategoryController extends AbstractController
 {
 
 // code de recherhce de categorie
-      #[Route('/api/category/search/{cname}', name: 'app_search', methods: ['GET'])]
-     public function search(CategoryRepository $repo, string $cname): JsonResponse
- {
-     $categories = $repo->findCategory($cname);
-     return $this->json($categories, Response::HTTP_OK);
-     }
+//       #[Route('/category/search/{cname}', name: 'app_category_search', methods: ['GET'])]
+//      public function search(CategoryRepository $repo, string $cname): JsonResponse
+//  {
+//      $categories = $repo->findCategory($cname);
+//      return $this->json($categories, Response::HTTP_OK);
+//      }
 
-        #[Route('/api/category', name: 'app_display', methods: ['GET'])]
+        #[Route('/category', name: 'app_category_display', methods: ['GET'])]
 public function display(CategoryRepository $repo): JsonResponse
 {
 
     return $this->json($repo->findAll(), Response:: HTTP_OK);
 }
 
-    #[Route('/api/category', name: 'app_create',methods:["POST"])]
+    #[Route('/category', name: 'app_category_create',methods:["POST"])]
     public function create(Request $request,EntityManagerInterface $emi): JsonResponse
     {
         $data=json_decode($request->getContent(),true);
@@ -43,7 +43,7 @@ public function display(CategoryRepository $repo): JsonResponse
     return $this->json($categorie, Response::HTTP_CREATED);
     }
 
-        #[Route('/api/category/{id}', name: 'app_update',methods:["PUT"])]
+        #[Route('/category/{id}', name: 'app_category_update',methods:["PUT"])]
     public function update(Category $categorie, Request $request,EntityManagerInterface $emi): JsonResponse
     {
         $data=json_decode($request->getContent(),true);
@@ -56,7 +56,7 @@ public function display(CategoryRepository $repo): JsonResponse
     return $this->json($categorie, Response::HTTP_OK);
 
     }
-            #[Route('/api/category/{id}', name: 'app_delete',methods:["DELETE"])]
+            #[Route('/category/{id}', name: 'app_category_delete',methods:["DELETE"])]
     public function delete(Category $categorie,EntityManagerInterface $emi): JsonResponse
     {        
         $emi->remove($categorie);

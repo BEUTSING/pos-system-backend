@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class LoginController extends AbstractController
 {
-    #[Route('/api/login', name: 'app_login', methods: ['POST'])]
+    #[Route('/login', name: 'app_login', methods: ['POST'])]
     public function index(Request $request,UserPasswordHasher $passwordHarsher,EntityManagerInterface $entityManager,JWTTokenManagerInterface $JWTManager): 
     JsonResponse{
         $date=json_decode($request->getContent(),true);
@@ -33,7 +33,7 @@ final class LoginController extends AbstractController
             return new JsonResponse(['token' => $token], Response::HTTP_OK);
     }
 
-    #[Route('/api/logout', name: 'app_logout', methods: ['POST'])]
+    #[Route('/logout', name: 'app_logout', methods: ['POST'])]
     public function logout(): JsonResponse
     {
         return new JsonResponse(['message' => 'Logged out successfully'], Response::HTTP_OK);
