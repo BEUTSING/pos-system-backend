@@ -21,10 +21,10 @@ final class SupplierController extends AbstractController
     }
 
 
-    #[Route('/search/{name}', name: 'app_supplier_search', methods: ['GET'])]
-    public function search(SupplierRepository $supplierRepository, string $name): JsonResponse
+    #[Route('/search/{sname}', name: 'app_supplier_search', methods: ['GET'])]
+    public function search(SupplierRepository $supplierRepository, string $sname): JsonResponse
     {
-        $suppliers = $supplierRepository->findsupplier( $name);
+        $suppliers = $supplierRepository->findsupplier($sname);
         if (!$suppliers) {
             return $this->json(['error' => 'Supplier not found'], Response::HTTP_NOT_FOUND);
         }

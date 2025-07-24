@@ -6,6 +6,7 @@ use App\Entity\Checkout\Invoice;
 use App\Entity\Checkout\Sale;
 use App\Entity\Stock\Purchaseorder;
 use App\Entity\Stock\Stockmovement;
+use App\Entity\Stock\Supplier;
 use App\Entity\Traits\TimestampableTrait;
 use App\Repository\Product\ProductRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -64,11 +65,12 @@ class Product
     #[ORM\Column]
     private ?int $minimumstock = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $supplier = null;
-
+   
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 0)]
     private ?string $saleprice = null;
+
+    #[ORM\ManyToOne(inversedBy: 'products')]
+    private ?Supplier $supplier = null;
 
     public function __construct()
     {
@@ -265,18 +267,6 @@ class Product
         return $this;
     }
 
-    public function getSupplier(): ?string
-    {
-        return $this->supplier;
-    }
-
-    public function setSupplier(string $supplier): static
-    {
-        $this->supplier = $supplier;
-
-        return $this;
-    }
-
     public function getSaleprice (): ?string
     {
         return $this->saleprice;
@@ -285,6 +275,18 @@ class Product
     public function setSaleprice(string $saleprice): static
     {
         $this->saleprice =$saleprice;
+
+        return $this;
+    }
+
+    public function getSupplier(): ?Supplier
+    {
+        return $this->supplier;
+    }
+
+    public function setSupplier(?Supplier $supplier): static
+    {
+        $this->supplier = $supplier;
 
         return $this;
     }

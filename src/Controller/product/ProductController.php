@@ -20,7 +20,7 @@ final class ProductController extends AbstractController
     #[Route('/product/search/{pname}', name: 'app_product_search', methods: ['GET'])]
     public function search(ProductRepository $repo, string $pname): JsonResponse
     {
-        $products = $repo->findBy(['productname' => $pname]);
+        $products = $repo->findProduct($pname);
         if (!$products) {
             return $this->json(['error' => 'Product not found'], Response::HTTP_NOT_FOUND);
         }
@@ -43,6 +43,7 @@ final class ProductController extends AbstractController
         if(!$category){
             return $this->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
         }
+
          $supplier = $supplierrepository->find($data['supplier']);
         if(!$supplier){
             return $this->json(['error' => 'Supplier not found'], Response::HTTP_NOT_FOUND);
@@ -51,7 +52,7 @@ final class ProductController extends AbstractController
         $product = new Product();
         $product->setProductname($data['productname']);
         $product->setCategory($category);
-        $product->setSupplier($data['supplier']);
+        $product->setSupplier($supplier);
         $product->setSaleprice($data['saleprice']);
         $product->setPurchaseprice($data['purchaseprice']);
         $product->setQuantity($data['quantity']);
@@ -74,16 +75,17 @@ final class ProductController extends AbstractController
             }
             $product->setCategory($category);
         }
-            
-         if(isset($data['supplier'])){
-            $supplier = $supplierrepository->find($data['name']);
-            if (!$category) {
-                return $this->json(['error' => 'sypplier not found'], Response::HTTP_NOT_FOUND);
-            }
-            $product->setCategory($supplier);
-        }
+
+         if (isset($data['supplier'])) {
+    $supplier = $supplierrepository->find($data['supplier']);
+    if (!$supplier) {
+        return $this->json(['error' => 'Supplier not found'], Response::HTTP_NOT_FOUND);
+
+    }
+               $product->setSupplier($supplier);
+}
+   
         $product->setProductname($data['productname'] ?? $product->getProductname());
-        $product->setSupplier($data['supplier'] ?? $product->getSupplier());
         $product->setSaleprice($data['saleprice'] ?? $product->getSaleprice());
         $product->setPurchaseprice($data['purchaseprice'] ?? $product->getPurchaseprice());
         $product->setMinimumstock($data['minimumstock']?? $product->getMinimumstock());
