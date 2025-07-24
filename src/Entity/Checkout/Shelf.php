@@ -17,20 +17,18 @@ class Shelf
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $names = null;
 
     #[ORM\Column]
     private ?int $number = null;
-
-    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 7)]
-    private ?string $quantityshelf = null;
 
     /**
      * @var Collection<int, Product>
      */
     #[ORM\OneToMany(targetEntity: Product::class, mappedBy: 'shelf')]
     private Collection $products;
+
+    #[ORM\Column(length: 255)]
+    private ?string $responsable = null;
 
     public function __construct()
     {
@@ -42,17 +40,6 @@ class Shelf
         return $this->id;
     }
 
-    public function getNames(): ?string
-    {
-        return $this->names;
-    }
-
-    public function setNames(string $names): static
-    {
-        $this->names = $names;
-
-        return $this;
-    }
 
     public function getNumber(): ?int
     {
@@ -66,17 +53,6 @@ class Shelf
         return $this;
     }
 
-    public function getQuantityshelf(): ?string
-    {
-        return $this->quantityshelf;
-    }
-
-    public function setQuantityshelf(string $quantityshelf): static
-    {
-        $this->quantityshelf = $quantityshelf;
-
-        return $this;
-    }
 
     /**
      * @return Collection<int, Product>
@@ -104,6 +80,18 @@ class Shelf
                 $product->setShelf(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getResponsable(): ?string
+    {
+        return $this->responsable;
+    }
+
+    public function setResponsable(string $responsable): static
+    {
+        $this->responsable = $responsable;
 
         return $this;
     }
