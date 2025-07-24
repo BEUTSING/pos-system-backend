@@ -3,8 +3,10 @@
 namespace App\Controller\product;
 
 use App\Entity\Product\Product;
+use App\Repository\Checkout\ShelfRepository;
 use App\Repository\Product\CategoryRepository;
 use App\Repository\Product\ProductRepository;
+use App\Repository\Stock\SupplierRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -33,13 +35,17 @@ final class ProductController extends AbstractController
     }
 
     #[Route('/product', name: 'app_product_create', methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $em,CategoryRepository $categoryrepository): JsonResponse
+    public function create(Request $request, EntityManagerInterface $em,CategoryRepository $categoryrepository, SupplierRepository $supplierrepository): JsonResponse
     {
      $data= json_decode($request->getContent(), true);
 
         $category = $categoryrepository->find($data['category']);
         if(!$category){
             return $this->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        }
+         $supplier = $supplierrepository->find($data['supplier']);
+        if(!$supplier){
+            return $this->json(['error' => 'Supplier not found'], Response::HTTP_NOT_FOUND);
         }
 
         $product = new Product();
@@ -49,7 +55,7 @@ final class ProductController extends AbstractController
         $product->setSaleprice($data['saleprice']);
         $product->setPurchaseprice($data['purchaseprice']);
         $product->setQuantity($data['quantity']);
-        $product->setShelf($data['shelf']);
+
         $product->setMinimumstock($data['minimumstock']);
          $em->persist($product);
         $em->flush();
@@ -57,7 +63,7 @@ final class ProductController extends AbstractController
         return $this->json(['message' => 'Product created successfully'], Response::HTTP_CREATED);
     }
     #[Route('/product/{id}', name: 'app_product_update', methods: ['PUT'])]
-    public function update(Product $product, Request $request, EntityManagerInterface $em,CategoryRepository $categoryrepository): JsonResponse
+    public function update(Product $product, Request $request, EntityManagerInterface $em,CategoryRepository $categoryrepository,SupplierRepository $supplierrepository): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -68,14 +74,20 @@ final class ProductController extends AbstractController
             }
             $product->setCategory($category);
         }
-
+            
+         if(isset($data['supplier'])){
+            $supplier = $supplierrepository->find($data['name']);
+            if (!$category) {
+                return $this->json(['error' => 'sypplier not found'], Response::HTTP_NOT_FOUND);
+            }
+            $product->setCategory($supplier);
+        }
         $product->setProductname($data['productname'] ?? $product->getProductname());
         $product->setSupplier($data['supplier'] ?? $product->getSupplier());
         $product->setSaleprice($data['saleprice'] ?? $product->getSaleprice());
         $product->setPurchaseprice($data['purchaseprice'] ?? $product->getPurchaseprice());
         $product->setMinimumstock($data['minimumstock']?? $product->getMinimumstock());
         $product->setQuantity($data['quantity'] ?? $product->getQuantity());
-        $product->setShelf($data['shelf'] ?? $product->getShelf());
 
         $em->flush();
 

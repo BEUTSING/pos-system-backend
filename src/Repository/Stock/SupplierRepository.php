@@ -15,6 +15,17 @@ class SupplierRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Supplier::class);
     }
+   
+    public function findsupplier($name): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.name LIKE :val')
+            ->setParameter('val', '%' . $name . '%')
+            ->orderBy('s.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
 
     //    /**
     //     * @return Supplier[] Returns an array of Supplier objects

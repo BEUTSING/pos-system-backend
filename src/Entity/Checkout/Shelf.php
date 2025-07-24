@@ -6,7 +6,6 @@ use App\Entity\Product\Product;
 use App\Repository\Checkout\ShelfRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ShelfRepository::class)]
@@ -62,28 +61,9 @@ class Shelf
         return $this->products;
     }
 
-    public function addProduct(Product $product): static
-    {
-        if (!$this->products->contains($product)) {
-            $this->products->add($product);
-            $product->setShelf($this);
-        }
 
-        return $this;
-    }
 
-    public function removeProduct(Product $product): static
-    {
-        if ($this->products->removeElement($product)) {
-            // set the owning side to null (unless already changed)
-            if ($product->getShelf() === $this) {
-                $product->setShelf(null);
-            }
-        }
-
-        return $this;
-    }
-
+  
     public function getResponsable(): ?string
     {
         return $this->responsable;

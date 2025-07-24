@@ -4,7 +4,6 @@ namespace App\Entity\Product;
 
 use App\Entity\Checkout\Invoice;
 use App\Entity\Checkout\Sale;
-use App\Entity\Checkout\Shelf;
 use App\Entity\Stock\Purchaseorder;
 use App\Entity\Stock\Stockmovement;
 use App\Entity\Traits\TimestampableTrait;
@@ -33,9 +32,6 @@ class Product
 
     #[ORM\ManyToOne(inversedBy: 'products')]
     private ?Category $category = null;
-
-    #[ORM\ManyToOne(inversedBy: 'products')]
-    private ?Shelf $shelf = null;
 
     /**
      * @var Collection<int, Stockmovement>
@@ -119,18 +115,6 @@ class Product
     public function setCategory(?Category $category): static
     {
         $this->category = $category;
-
-        return $this;
-    }
-
-    public function getShelf(): ?Shelf
-    {
-        return $this->shelf;
-    }
-
-    public function setShelf(?Shelf $shelf): static
-    {
-        $this->shelf = $shelf;
 
         return $this;
     }
