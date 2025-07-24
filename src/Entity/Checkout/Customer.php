@@ -2,16 +2,18 @@
 
 namespace App\Entity\Checkout;
 
-use App\Entity\Shared\Contact;
+use App\Entity\Traits\ContactTrait;
 use App\Repository\Checkout\CustomerRepository ;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\ORM\Query\AST\Functions\ConcatFunction;
+
 
 #[ORM\Entity(repositoryClass:CustomerRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Customer
 {
+    use ContactTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -23,8 +25,6 @@ class Customer
     #[ORM\OneToMany(targetEntity: Invoice::class, mappedBy: 'customernam')]
     private Collection $invoices;
 
-    #[ORM\ManyToOne(inversedBy: 'customers')]
-    private ?Customer $contact = null;
 
     public function __construct()
     {
@@ -66,15 +66,5 @@ class Customer
         return $this;
     }
 
-    public function getContact(): ?Contact
-    {
-        return $this->contact;
-    }
-
-    public function setContact(?Contact $contact): static
-    {
-        $this->contact = $contact;
-
-        return $this;
-    }
+    
 }

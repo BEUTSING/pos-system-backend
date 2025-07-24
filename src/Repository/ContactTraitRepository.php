@@ -1,23 +1,23 @@
 <?php
 
-namespace App\Repository\Shared;
+namespace App\Repository;
 
-use App\Entity\Shared\Contact;
+use App\Entity\ContactTrait;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Centact>
+ * @extends ServiceEntityRepository<ContactTrait>
  */
-class ContactRepository extends ServiceEntityRepository
+class ContactTraitRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Contact::class);
+        parent::__construct($registry, ContactTrait::class);
     }
 
     //    /**
-    //     * @return Contact[] Returns an array of Contact objects
+    //     * @return ContactTrait[] Returns an array of ContactTrait objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -31,7 +31,7 @@ class ContactRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?Contact
+    //    public function findOneBySomeField($value): ?ContactTrait
     //    {
     //        return $this->createQueryBuilder('c')
     //            ->andWhere('c.exampleField = :val')
