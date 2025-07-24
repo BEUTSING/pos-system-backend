@@ -28,7 +28,18 @@ final class SupplierController extends AbstractController
         if (!$suppliers) {
             return $this->json(['error' => 'Supplier not found'], Response::HTTP_NOT_FOUND);
         }
-        return $this->json($suppliers, Response::HTTP_OK);
+        // Return the found suppliers
+                $data = [];
+        foreach ($suppliers as $supplier) {
+            $data[] = [
+                'id' => $supplier->getId(),
+                'name' => $supplier->getName(),
+                'email' => $supplier->getEmail(),
+                'city' => $supplier->getCity(),
+                'phone' => $supplier->getPhone(),
+            ];
+        }       
+        return $this->json($data, Response::HTTP_OK);
 }
 
     #[Route('', name: 'app_supplier_create', methods: ['POST'])]

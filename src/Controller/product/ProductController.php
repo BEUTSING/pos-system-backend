@@ -24,7 +24,20 @@ final class ProductController extends AbstractController
         if (!$products) {
             return $this->json(['error' => 'Product not found'], Response::HTTP_NOT_FOUND);
         }
-        return $this->json($products, Response::HTTP_OK);
+        $data = [];
+        foreach ($products as $product) {
+            $data[] = [
+                'id' => $product->getId(),
+                'productname' => $product->getProductname(),
+                'category' => $product->getCategory() ? $product->getCategory()->getCategoryname() : null,
+                'supplier' => $product->getSupplier() ? $product->getSupplier()->getName() : null,
+                'saleprice' => $product->getSaleprice(),
+                'purchaseprice' => $product->getPurchaseprice(),
+                'quantity' => $product->getQuantity(),
+                'minimumstock' => $product->getMinimumstock(),
+            ];
+        }
+        return $this->json($data, Response::HTTP_OK);
     }
 
     #[Route('/product', name: 'app_product_display', methods: ['GET'])]

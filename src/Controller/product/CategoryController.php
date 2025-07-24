@@ -22,7 +22,17 @@ final class CategoryController extends AbstractController
         if (!$categories) {
             return $this->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
         }
-     return $this->json($categories, Response::HTTP_OK);
+        // Return the found categories
+        $data = [];
+        foreach ($categories as $category) {
+            $data[] = [
+                'id' => $category->getId(),
+                'categoryname' => $category->getCategoryname(),
+                'description' => $category->getDescription(),
+            ];
+        }
+        // Return the data as JSON response
+     return $this->json($data, Response::HTTP_OK);
      }
 
         #[Route('/category', name: 'app_category_display', methods: ['GET'])]
@@ -52,7 +62,7 @@ public function display(CategoryRepository $repo): JsonResponse
         $data=json_decode($request->getContent(),true);
         
         $categorie->setCategoryname($data['categoryname']??$categorie->getCategoryname() );
-         $categorie->setDescription($data['description']??$categorie->getDescription() );
+        $categorie->setDescription($data['description']??$categorie->getDescription() );
         
 
         $emi->flush();

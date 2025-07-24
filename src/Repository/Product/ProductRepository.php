@@ -24,6 +24,7 @@ class ProductRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+    
     //    /**
     //     * @return Product[] Returns an array of Product objects
     //     */
