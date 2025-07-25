@@ -54,6 +54,7 @@ public function display(CategoryRepository $repo): JsonResponse
         $categorie->setCategoryname($data['categoryname']);
         $categorie->setDescription($data['description']);
 
+
        
         $emi->persist($categorie);
         $emi->flush();

@@ -6,8 +6,10 @@ use App\Entity\Product\Product;
 use App\Repository\Product\CategoryRepository;
 use App\Repository\Product\ProductRepository;
 use App\Repository\Stock\SupplierRepository;
+use App\Service\LogEntryService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +17,12 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class ProductController extends AbstractController
 {
-   
+    private LogEntryService $logEntryService;
+    public function __construct(private Security $security, LogEntryService $logEntryService)
+    {
+        $this->logEntryService = $logEntryService;
+    }
+
     #[Route('/product/search/{pname}', name: 'app_product_search', methods: ['GET'])]
     public function search(ProductRepository $repo, string $pname): JsonResponse
     {
@@ -89,6 +96,7 @@ final class ProductController extends AbstractController
 
          $em->persist($product);
         $em->flush();
+        $this->logEntryService->createLogEntry('Product created: ' . $product->getProductname());
 
         return $this->json(['message' => 'Product created successfully'], Response::HTTP_CREATED);
     }
