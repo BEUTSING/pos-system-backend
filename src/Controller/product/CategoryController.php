@@ -6,6 +6,7 @@ use App\Entity\Product\Category;
 use App\Repository\Product\CategoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -43,13 +44,16 @@ public function display(CategoryRepository $repo): JsonResponse
 }
 
     #[Route('/category', name: 'app_category_create',methods:["POST"])]
-    public function create(Request $request,EntityManagerInterface $emi): JsonResponse
+    public function create(Request $request,EntityManagerInterface $emi, Security $security): JsonResponse
     {
+        $user = $security->getUser();
+
         $data=json_decode($request->getContent(),true);
          
         $categorie=new Category();
         $categorie->setCategoryname($data['categoryname']);
         $categorie->setDescription($data['description']);
+
        
         $emi->persist($categorie);
         $emi->flush();

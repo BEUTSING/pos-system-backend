@@ -48,6 +48,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Entity/Stock'
                 prefix: 'App\Entity\Stock'
                 alias: Stock
+            Shared:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Entity/Shared'
+                prefix: 'App\Entity\Shared'
+                alias: Shared
         controller_resolver:
             auto_mapping: false
 when@test:

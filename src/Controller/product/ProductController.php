@@ -43,7 +43,22 @@ final class ProductController extends AbstractController
     #[Route('/product', name: 'app_product_display', methods: ['GET'])]
     public function display(ProductRepository $repos): JsonResponse
     {
-       return $this->json($repos->findAll(), Response::HTTP_OK);
+       $products = $repos->findAll();
+        $data = [];
+
+        foreach ($products as $product) {
+            $data[] = [
+                'id' => $product->getId(),
+                'productname' => $product->getProductname(),
+                'category' => $product->getCategory() ? $product->getCategory()->getCategoryname() : null,
+                'supplier' => $product->getSupplier() ? $product->getSupplier()->getName() : null,
+                'saleprice' => $product->getSaleprice(),
+                'purchaseprice' => $product->getPurchaseprice(),
+                'quantity' => $product->getQuantity(),
+                'minimumstock' => $product->getMinimumstock(),
+            ];
+        }
+        return $this->json($data, Response::HTTP_OK);
 
     }
 
@@ -57,10 +72,8 @@ final class ProductController extends AbstractController
             return $this->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
         }
 
-         $supplier = $supplierrepository->find($data['supplier']);
-        if(!$supplier){
-            return $this->json(['error' => 'Supplier not found'], Response::HTTP_NOT_FOUND);
-        }
+        $supplier = $data['supplier']? $supplierrepository->find($data['supplier']) : null;
+
 
         $product = new Product();
         $product->setProductname($data['productname']);
