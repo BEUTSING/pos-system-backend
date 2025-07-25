@@ -20,6 +20,10 @@ final class RegisterController extends AbstractController
         $data=json_decode($request->getContent(), true);
         
         $user=new User();
+        $user->setName($data['name']);
+        $user->setPhone($data['phone']);
+        $user->setCity($data['city']);
+        $user->setColor($data['color']);
         $user->setEmail($data['email']);
         $user->setPassword($passwordHasher->hashPassword($user, $data['password']));
 

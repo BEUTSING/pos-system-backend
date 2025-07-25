@@ -3,7 +3,6 @@
 namespace App\Controller\product;
 
 use App\Entity\Product\Product;
-use App\Repository\Checkout\ShelfRepository;
 use App\Repository\Product\CategoryRepository;
 use App\Repository\Product\ProductRepository;
 use App\Repository\Stock\SupplierRepository;
@@ -67,6 +66,10 @@ final class ProductController extends AbstractController
     {
      $data= json_decode($request->getContent(), true);
 
+     if(!isset($data['productname']) || !isset($data['category']) || !isset($data['saleprice']) || !isset($data['purchaseprice']) || !isset($data['quantity']) || !isset($data['minimumstock'])) {
+            return $this->json(['error' => 'Missing required fields'], Response::HTTP_BAD_REQUEST);
+        }
+
         $category = $categoryrepository->find($data['category']);
         if(!$category){
             return $this->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
@@ -82,13 +85,14 @@ final class ProductController extends AbstractController
         $product->setSaleprice($data['saleprice']);
         $product->setPurchaseprice($data['purchaseprice']);
         $product->setQuantity($data['quantity']);
-
         $product->setMinimumstock($data['minimumstock']);
+
          $em->persist($product);
         $em->flush();
 
         return $this->json(['message' => 'Product created successfully'], Response::HTTP_CREATED);
     }
+
     #[Route('/product/{id}', name: 'app_product_update', methods: ['PUT'])]
     public function update(Product $product, Request $request, EntityManagerInterface $em,CategoryRepository $categoryrepository,SupplierRepository $supplierrepository): JsonResponse
     {
@@ -110,7 +114,7 @@ final class ProductController extends AbstractController
     }
                $product->setSupplier($supplier);
 }
-   
+
         $product->setProductname($data['productname'] ?? $product->getProductname());
         $product->setSaleprice($data['saleprice'] ?? $product->getSaleprice());
         $product->setPurchaseprice($data['purchaseprice'] ?? $product->getPurchaseprice());

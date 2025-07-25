@@ -3,7 +3,7 @@
 namespace App\Entity\Checkout;
 
 use App\Entity\Product\Product;
-use App\Repository\InvoiceRepository;
+use App\Repository\Checkout\InvoiceRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 

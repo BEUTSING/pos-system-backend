@@ -57,6 +57,7 @@ public function display(CategoryRepository $repo): JsonResponse
        
         $emi->persist($categorie);
         $emi->flush();
+
     return $this->json($categorie, Response::HTTP_CREATED);
     }
 
