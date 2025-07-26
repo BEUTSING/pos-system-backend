@@ -15,6 +15,8 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/sale')]
 final class SaleController extends AbstractController
 {
+
+    
     #[Route('/search/{sname}', name: 'app_sale_search', methods: ['GET'])]
     public function search(SaleRepository $repo, string $sname): JsonResponse
     {

@@ -4,8 +4,10 @@ namespace App\Controller\Stock;
 
 use App\Entity\Stock\Supplier;
 use App\Repository\Stock\SupplierRepository;
+use App\Service\LogEntryService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,6 +16,11 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/supplier')]
 final class SupplierController extends AbstractController
 {
+    private LogEntryService $logEntryService;
+    public function __construct(private Security $security, LogEntryService $logEntryService)
+    {
+        $this->logEntryService = $logEntryService;
+    }
     #[Route('', name: 'app_supplier_display', methods: ['GET'])]
     public function display(SupplierRepository $supplierRepository): JsonResponse
     {
@@ -55,6 +62,8 @@ final class SupplierController extends AbstractController
         
         $em->persist($supplier);
         $em->flush();
+        // Log the creation of the supplier
+        $this->logEntryService->createLogEntry('Supplier created: ' . $supplier->getName());
         return $this->json(['message' => 'Supplier created successfully'], Response::HTTP_CREATED);
     }
 
@@ -69,6 +78,9 @@ final class SupplierController extends AbstractController
         $supplier->setPhone($data['phone'] ?? $supplier->getPhone());
 
         $em->flush();
+
+        // Log the update of the supplier
+        $this->logEntryService->createLogEntry('Supplier updated: ' . $supplier->getName());
         return $this->json(['message' => 'Supplier updated successfully'], Response::HTTP_OK);
     
     }
@@ -78,6 +90,9 @@ final class SupplierController extends AbstractController
     {
         $em->remove($supplier);
         $em->flush();
+
+        // Log the deletion of the supplier
+        $this->logEntryService->createLogEntry('Supplier deleted: ' . $supplier->getName());
         return $this->json(['message' => 'Supplier deleted successfully'], Response::HTTP_NO_CONTENT);
     }
 

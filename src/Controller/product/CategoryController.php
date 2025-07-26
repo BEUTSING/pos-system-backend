@@ -4,6 +4,7 @@ namespace App\Controller\product;
 
 use App\Entity\Product\Category;
 use App\Repository\Product\CategoryRepository;
+use App\Service\LogEntryService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -14,7 +15,11 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class CategoryController extends AbstractController
 {
-
+    private LogEntryService $logEntryService;
+    public function __construct(private Security $security, LogEntryService $logEntryService)
+    {
+        $this->logEntryService = $logEntryService;
+    }
 // search category
       #[Route('/category/search/{cname}', name: 'app_category_search', methods: ['GET'])]
      public function search(CategoryRepository $repo, string $cname): JsonResponse
@@ -58,7 +63,8 @@ public function display(CategoryRepository $repo): JsonResponse
        
         $emi->persist($categorie);
         $emi->flush();
-
+        // Log the creation of the category
+        $this->logEntryService->createLogEntry('Category created: ' . $categorie->getCategoryname());
     return $this->json($categorie, Response::HTTP_CREATED);
     }
 
@@ -72,6 +78,8 @@ public function display(CategoryRepository $repo): JsonResponse
         
 
         $emi->flush();
+        // Log the update of the category
+        $this->logEntryService->createLogEntry('Category updated: ' . $categorie->getCategoryname());
     return $this->json($categorie, Response::HTTP_OK);
 
     }
@@ -80,6 +88,8 @@ public function display(CategoryRepository $repo): JsonResponse
     {        
         $emi->remove($categorie);
         $emi->flush();
+        // Log the deletion of the category
+        $this->logEntryService->createLogEntry('Category deleted: ' . $categorie->getCategoryname());
            return $this->json(Null, 204);
 
     }

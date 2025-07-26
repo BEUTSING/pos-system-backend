@@ -34,7 +34,6 @@ class Category
     private ?string $description = null;
 
 
-
     public function __construct()
     {
         $this->products = new ArrayCollection();

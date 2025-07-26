@@ -2,11 +2,14 @@
 
 namespace App\Controller\Stock;
 
+use App\Entity\Product\Product;
 use App\Entity\Stock\Stockmovement;
 use App\Repository\Product\ProductRepository;
 use App\Repository\Stock\StockmovementRepository;
+use App\Service\LogEntryService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,7 +19,13 @@ use Symfony\Component\Routing\Attribute\Route;
 final class StockmovementController extends AbstractController
 {
 
-    
+    private LogEntryService $logEntryService;
+    public function __construct(private Security $security, LogEntryService $logEntryService)
+    {
+        $this->logEntryService = $logEntryService;
+    }   
+
+
     #[Route('', name: 'app_stockmovement_display', methods: ['GET'])]
     public function display(StockmovementRepository $repo): JsonResponse
     {
@@ -42,7 +51,16 @@ final class StockmovementController extends AbstractController
 
         $em->persist($movement);
         $em->flush();
-        return $this->json($movement, Response::HTTP_CREATED);
+        $data = [
+            'id' => $movement->getId(),
+            'product' => $movement->getProduct()->getProductname(),
+            'quantity' => $movement->getQuantity(),
+            'typemovement' => $movement->getTypemovement(),
+            'reason' => $movement->getReason(),
+        ];
+        // Log the creation of the stock movement
+        //$this->logEntryService->createLogEntry('Stock movement created for product: ' . $product->getProductname() . ' with quantity: ' . $movement->getQuantity().' and of type ' .$movement->getTypemovement());
+        return $this->json($data, Response::HTTP_CREATED);
     }
 
 #[Route('/{id}', name: 'app_stockmovement_update', methods: ['POST'])]
@@ -62,13 +80,19 @@ final class StockmovementController extends AbstractController
         $movement->setReason($data['reason']?? $movement->getReason());
 
         $em->flush();
+
+        //log the update of the stock movement
+    $this->logEntryService->createLogEntry('Stock movement update for product: ' . $product->getProductname() . ' with quantity: ' . $movement->getQuantity());
         return $this->json($movement, Response::HTTP_OK);
     }
     #[Route('/{id}', name: 'app_stockmovement_delete', methods: ['DELETE'])]
-    public function delete(Stockmovement $movement, EntityManagerInterface $em): JsonResponse
+    public function delete(Stockmovement $movement, EntityManagerInterface $em, Product $product): JsonResponse
     {
         $em->remove($movement);
         $em->flush();
+
+        // log the delete of the stock movement
+    $this->logEntryService->createLogEntry('Stock movement delete for product: ' . $product->getProductname());
         return $this->json(['message' => 'Stock movement deleted successfully'], Response::HTTP_NO_CONTENT);
     }
 }

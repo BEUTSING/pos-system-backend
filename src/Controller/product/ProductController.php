@@ -131,6 +131,8 @@ final class ProductController extends AbstractController
 
         $em->flush();
 
+
+        $this->logEntryService->createLogEntry('Product updated: ' . $product->getProductname());
         return $this->json(['message' => 'Product updated successfully'], Response::HTTP_OK);
     }
 
@@ -139,7 +141,8 @@ final class ProductController extends AbstractController
     {
         $em->remove($product);
         $em->flush();
-
+        
+        $this->logEntryService->createLogEntry('Product deleted: ' . $product->getProductname());
         return $this->json(['message' => 'Product deleted successfully'], Response::HTTP_OK);
     }
 
