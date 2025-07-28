@@ -3,7 +3,6 @@
 namespace App\Entity\Product;
 
 use App\Entity\Checkout\Invoice;
-use App\Entity\Checkout\Order;
 use App\Entity\Checkout\Sale;
 use App\Entity\Stock\Purchaseorder;
 use App\Entity\Stock\Stockmovement;
@@ -14,7 +13,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -73,13 +71,6 @@ class Product
 
     #[ORM\ManyToOne(inversedBy: 'products')]
     private ?Supplier $supplier = null;
-
-    /**
-     * @var Collection<int, Order>
-     */
-    #[ORM\ManyToMany(targetEntity: Order::class, mappedBy: 'product')]
-    private Collection $orders;
-
    
 
     public function __construct()
@@ -88,7 +79,6 @@ class Product
         $this->sales = new ArrayCollection();
         $this->invoices = new ArrayCollection();
         $this->purchaseorders = new ArrayCollection();
-        $this->orders = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -302,31 +292,5 @@ class Product
         return $this;
     }
 
-    /**
-     * @return Collection<int, Order>
-     */
-    public function getOrders(): Collection
-    {
-        return $this->orders;
-    }
-
-    public function addOrder(Order $order): static
-    {
-        if (!$this->orders->contains($order)) {
-            $this->orders->add($order);
-            $order->addProduct($this);
-        }
-
-        return $this;
-    }
-
-    public function removeOrder(Order $order): static
-    {
-        if ($this->orders->removeElement($order)) {
-            $order->removeProduct($this);
-        }
-
-        return $this;
-    }
 
 }

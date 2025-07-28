@@ -4,7 +4,6 @@ namespace App\Service;
 
 use App\Entity\Shared\logEntry;
 use App\Repository\Shared\logEntryRepository;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
