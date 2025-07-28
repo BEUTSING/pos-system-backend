@@ -30,9 +30,20 @@ final class StockmovementController extends AbstractController
     public function display(StockmovementRepository $repo): JsonResponse
     {
         $stockMovements = $repo->findAll();
-        return $this->json($stockMovements, Response::HTTP_OK);
+        $data = [];
+        foreach ($stockMovements as $movement) {
+            $data[] = [
+                'id' => $movement->getId(),
+                'product' => $movement->getProduct() ? $movement->getProduct()->getProductname() : null,
+                'quantity' => $movement->getQuantity(),
+                'typemovement' => $movement->getTypemovement(),
+                'reason' => $movement->getReason(),
+                'date' => $movement->getDate()->format('Y-m-d H:i:s'),
+            ];
+        }
+        return $this->json($data, Response::HTTP_OK);
     }
-
+   
     #[Route('', name: 'app_stockmovement_create', methods: ['POST'])]
     public function create(Stockmovement $movement, EntityManagerInterface $em, Request $request,ProductRepository $productrepository): JsonResponse
     {
@@ -43,12 +54,22 @@ final class StockmovementController extends AbstractController
             return $this->json(['error' => 'Product not found'], Response::HTTP_NOT_FOUND);}
 
         $movement=new Stockmovement();
-        $movement->setProduct($product);
         $movement->setQuantity($data['quantity']);
         $movement->setTypemovement($data['typemovement']);
         $movement->setReason($data['reason']);
 
-
+        switch ($movement->getTypemovement()) {
+            case 'in':
+                $product->setQuantity($product->getQuantity() + $movement->getQuantity());
+                break;
+            case 'out':
+                $product->setQuantity($product->getQuantity() - $movement->getQuantity());
+                break;
+            default:
+                return $this->json(['error' => 'Invalid movement type'], Response::HTTP_BAD_REQUEST);
+        }
+        $em->persist($product);
+        $movement->setProduct($product);
         $em->persist($movement);
         $em->flush();
         $data = [
@@ -57,9 +78,11 @@ final class StockmovementController extends AbstractController
             'quantity' => $movement->getQuantity(),
             'typemovement' => $movement->getTypemovement(),
             'reason' => $movement->getReason(),
+            'old_quantity' => $product->getQuantity() - $movement->getQuantity(),
+            'new_quantity' => $product->getQuantity(),
         ];
         // Log the creation of the stock movement
-        //$this->logEntryService->createLogEntry('Stock movement created for product: ' . $product->getProductname() . ' with quantity: ' . $movement->getQuantity().' and of type ' .$movement->getTypemovement());
+        $this->logEntryService->createLogEntry('Stock movement created for product: ' . $product->getProductname() . ' with quantity: ' . $movement->getQuantity().' and of type ' .$movement->getTypemovement());
         return $this->json($data, Response::HTTP_CREATED);
     }
 

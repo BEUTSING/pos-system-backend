@@ -21,6 +21,7 @@ final class SupplierController extends AbstractController
     {
         $this->logEntryService = $logEntryService;
     }
+    
     #[Route('', name: 'app_supplier_display', methods: ['GET'])]
     public function display(SupplierRepository $supplierRepository): JsonResponse
     {

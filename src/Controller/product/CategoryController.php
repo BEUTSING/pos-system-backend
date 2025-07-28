@@ -24,6 +24,8 @@ final class CategoryController extends AbstractController
       #[Route('/category/search/{cname}', name: 'app_category_search', methods: ['GET'])]
      public function search(CategoryRepository $repo, string $cname): JsonResponse
  {
+
+        // Find categories by name
      $categories = $repo->findCategory($cname);
         if (!$categories) {
             return $this->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
@@ -44,8 +46,18 @@ final class CategoryController extends AbstractController
         #[Route('/category', name: 'app_category_display', methods: ['GET'])]
 public function display(CategoryRepository $repo): JsonResponse
 {
+    $categorie=$repo->findAll();
+    $data = [];
+    foreach ($categorie as $category) {
+        $data[] = [
+            'id' => $category->getId(),
+            'categoryname' => $category->getCategoryname(),
+            'description' => $category->getDescription(),
+        ];
+    }
+    // Return the data as JSON response 
 
-    return $this->json($repo->findAll(), Response:: HTTP_OK);
+    return $this->json($data, Response:: HTTP_OK);
 }
 
     #[Route('/category', name: 'app_category_create',methods:["POST"])]

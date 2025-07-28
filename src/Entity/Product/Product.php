@@ -4,6 +4,7 @@ namespace App\Entity\Product;
 
 use App\Entity\Checkout\Invoice;
 use App\Entity\Checkout\Sale;
+use App\Entity\Older;
 use App\Entity\Stock\Purchaseorder;
 use App\Entity\Stock\Stockmovement;
 use App\Entity\Stock\Supplier;
@@ -72,6 +73,8 @@ class Product
 
     #[ORM\ManyToOne(inversedBy: 'products')]
     private ?Supplier $supplier = null;
+
+   
 
     public function __construct()
     {
@@ -291,4 +294,5 @@ class Product
 
         return $this;
     }
+
 }

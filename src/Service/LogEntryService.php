@@ -22,8 +22,6 @@ class LogEntryService
 
     }
 
-
-
     public function createLogEntry(string $message): void
     {
         $user= $this->security->getUser();

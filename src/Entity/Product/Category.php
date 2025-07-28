@@ -2,6 +2,7 @@
 
 namespace App\Entity\Product;
 
+use App\Entity\Checkout\Older;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use App\Entity\Traits\TimestampableTrait;
@@ -21,7 +22,7 @@ class Category
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255, unique: true)]
+    #[ORM\Column(length: 255)]
     private ?string $categoryname = null;
 
     /**
@@ -33,10 +34,17 @@ class Category
     #[ORM\Column(type: Types::TEXT)]
     private ?string $description = null;
 
+    /**
+     * @var Collection<int, Older>
+     */
+    #[ORM\ManyToMany(targetEntity: Older::class, mappedBy: 'product')]
+    private Collection $olders;
+
 
     public function __construct()
     {
         $this->products = new ArrayCollection();
+        $this->olders = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -94,6 +102,33 @@ class Category
     public function setDescription(string $description): static
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Older>
+     */
+    public function getOlders(): Collection
+    {
+        return $this->olders;
+    }
+
+    public function addOlder(Older $older): static
+    {
+        if (!$this->olders->contains($older)) {
+            $this->olders->add($older);
+            $older->addProduct($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOlder(Older $older): static
+    {
+        if ($this->olders->removeElement($older)) {
+            $older->removeProduct($this);
+        }
 
         return $this;
     }

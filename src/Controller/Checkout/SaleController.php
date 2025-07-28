@@ -5,8 +5,10 @@ namespace App\Controller\Checkout;
 use App\Entity\Checkout\Sale;
 use App\Repository\Checkout\SaleRepository;
 use App\Repository\Product\ProductRepository;
+use App\Service\LogEntryService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,7 +18,12 @@ use Symfony\Component\Routing\Attribute\Route;
 final class SaleController extends AbstractController
 {
 
-    
+    private LogEntryService $logEntryService;
+    public function __construct(private Security $security, LogEntryService $logEntryService)
+    {
+        $this->logEntryService = $logEntryService;
+    }
+
     #[Route('/search/{sname}', name: 'app_sale_search', methods: ['GET'])]
     public function search(SaleRepository $repo, string $sname): JsonResponse
     {
@@ -30,7 +37,20 @@ final class SaleController extends AbstractController
     #[Route('', name: 'app_sale_display',methods:['GET'])]
     public function display( SaleRepository $salerepo): JsonResponse
     {
-     return $this->json($salerepo->findAll(), Response::HTTP_OK);
+
+        $sales = $salerepo->findAll();
+        $data = [];
+        foreach ($sales as $sale) {
+            $data[] = [
+                'id' => $sale->getId(),
+                'product' => $sale->getProduct() ? $sale->getProduct()->getProductname() : null,
+                'quantity' => $sale->getQuantity(),
+                'datesale' => $sale->getDatesale()->format('Y-m-d H:i:s'),
+                'saleprice' => $sale->getSaleprice(),
+                'total' => $sale->getTotal(),
+            ];
+        }
+     return $this->json($data, Response::HTTP_OK);
     }
 
         #[Route('', name: 'app_sale_create',methods:['POST'])]
@@ -52,6 +72,20 @@ final class SaleController extends AbstractController
 
         $em->persist($sale);
         $em->flush();
+        
+        $data=[];
+        foreach ($sale as $sale) {
+            $data[] = [
+                'id' => $sale->getId(),
+                'product' => $sale->getProduct() ? $sale->getProduct()->getProductname() : null,
+                'quantity' => $sale->getQuantity(),
+                'datesale' => $sale->getDatesale()->format('Y-m-d H:i:s'),
+                'saleprice' => $sale->getSaleprice(),
+                'total' => $sale->getTotal(),
+            ];
+        }
+
+        $this->logEntryService->createLogEntry('Sale created for product: ' . $product->getProductname() . ' with quantity: ' . $sale->getQuantity());
         return $this->json($sale, Response::HTTP_CREATED);
     }
 
@@ -81,6 +115,9 @@ final class SaleController extends AbstractController
     {
         $em->remove($sale);
         $em->flush();
+
+        // Log the deletion of the sale
+        $this->logEntryService->createLogEntry('Sale deleted for product: ' . $sale->getProduct()->getProductname() . ' with quantity: ' . $sale->getQuantity());
         return $this->json(['message' => 'sale deleted successfully'], Response::HTTP_NO_CONTENT);
     }
 }

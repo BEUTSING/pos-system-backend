@@ -94,8 +94,19 @@ final class ProductController extends AbstractController
         $product->setQuantity($data['quantity']);
         $product->setMinimumstock($data['minimumstock']);
 
-         $em->persist($product);
+        $em->persist($product);
         $em->flush();
+
+        $data = [
+            'id' => $product->getId(),
+            'productname' => $product->getProductname(),
+            'category' => $product->getCategory()->getCategoryname(),
+            'supplier' => $product->getSupplier() ? $product->getSupplier()->getName() : null,
+            'saleprice' => $product->getSaleprice(),
+            'purchaseprice' => $product->getPurchaseprice(),
+            'quantity' => $product->getQuantity(),
+            'minimumstock' => $product->getMinimumstock(),
+        ];
         $this->logEntryService->createLogEntry('Product created: ' . $product->getProductname());
 
         return $this->json(['message' => 'Product created successfully'], Response::HTTP_CREATED);
@@ -130,7 +141,6 @@ final class ProductController extends AbstractController
         $product->setQuantity($data['quantity'] ?? $product->getQuantity());
 
         $em->flush();
-
 
         $this->logEntryService->createLogEntry('Product updated: ' . $product->getProductname());
         return $this->json(['message' => 'Product updated successfully'], Response::HTTP_OK);
