@@ -2,26 +2,28 @@
 
 namespace App\Entity\Checkout;
 
-use App\Entity\Product\Category;
+use App\Entity\Product\Product;
 use App\Entity\Traits\TimestampableTrait;
-use App\Repository\Checkout\OlderRepository;
+use App\Repository\Checkout\OrderRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: OlderRepository::class)]
+#[ORM\Entity(repositoryClass: OrderRepository::class)]
+#[ORM\Table(name: '`order`')]
 #[ORM\HasLifecycleCallbacks]
-class Older
-{   use TimestampableTrait;
+class Order
+{
+    use TimestampableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
     /**
-     * @var Collection<int, Category>
+     * @var Collection<int, Product>
      */
-    #[ORM\ManyToMany(targetEntity: Category::class, inversedBy: 'olders')]
+    #[ORM\ManyToMany(targetEntity: Product::class, inversedBy: 'orders')]
     private Collection $product;
 
     #[ORM\Column]
@@ -38,14 +40,14 @@ class Older
     }
 
     /**
-     * @return Collection<int, Category>
+     * @return Collection<int, Product>
      */
     public function getProduct(): Collection
     {
         return $this->product;
     }
 
-    public function addProduct(Category $product): static
+    public function addProduct(Product $product): static
     {
         if (!$this->product->contains($product)) {
             $this->product->add($product);
@@ -54,7 +56,7 @@ class Older
         return $this;
     }
 
-    public function removeProduct(Category $product): static
+    public function removeProduct(Product $product): static
     {
         $this->product->removeElement($product);
 

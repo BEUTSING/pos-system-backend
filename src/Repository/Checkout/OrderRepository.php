@@ -2,22 +2,22 @@
 
 namespace App\Repository\Checkout;
 
-use App\Entity\Checkout\Older;
+use App\Entity\Checkout\Order;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Older>
+ * @extends ServiceEntityRepository<Order>
  */
-class OlderRepository extends ServiceEntityRepository
+class OrderRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Older::class);
+        parent::__construct($registry, Order::class);
     }
 
     //    /**
-    //     * @return Older[] Returns an array of Older objects
+    //     * @return Order[] Returns an array of Order objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -31,7 +31,7 @@ class OlderRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?Older
+    //    public function findOneBySomeField($value): ?Order
     //    {
     //        return $this->createQueryBuilder('o')
     //            ->andWhere('o.exampleField = :val')
