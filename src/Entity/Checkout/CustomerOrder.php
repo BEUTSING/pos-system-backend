@@ -20,9 +20,9 @@ class CustomerOrder
     private ?int $id = null;
 
     /**
-     * @var Collection<int, Orderitem>
+     * @var Collection<int, OrderItem>
      */
-    #[ORM\OneToMany(targetEntity: Orderitem::class, mappedBy: 'customerOrder', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'customerOrder', orphanRemoval: true)]
     private Collection $orderitems;
 
     public function __construct()
@@ -36,14 +36,14 @@ class CustomerOrder
     }
 
     /**
-     * @return Collection<int, Orderitem>
+     * @return Collection<int, OrderItem>
      */
-    public function getOrderitems(): Collection
+    public function getOrderItems(): Collection
     {
         return $this->orderitems;
     }
 
-    public function addOrderitem(Orderitem $orderitem): static
+    public function addOrderItem(OrderItem $orderitem): static
     {
         if (!$this->orderitems->contains($orderitem)) {
             $this->orderitems->add($orderitem);
@@ -53,7 +53,7 @@ class CustomerOrder
         return $this;
     }
 
-    public function removeOrderitem(Orderitem $orderitem): static
+    public function removeOrderItem(OrderItem $orderitem): static
     {
         if ($this->orderitems->removeElement($orderitem)) {
             // set the owning side to null (unless already changed)

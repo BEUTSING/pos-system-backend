@@ -6,9 +6,7 @@ use App\Entity\Checkout\CustomerOrder;
 use App\Entity\Checkout\OrderItem;
 use App\Repository\Product\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Dom\Entity;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 class CheckoutService
 {
@@ -38,21 +36,32 @@ class CheckoutService
             $orderitem->setProduct($product);
             $orderitem->setQuantity($item['quantity']);
             $orderitem->setPrice($product->getSaleprice());
-            $this->entityManager->persist($orderitem);
-            $this->entityManager->flush();
 
+            $this->entityManager->persist($orderitem);
 
             $customerOrder->addOrderItem($orderitem);
-
-        
     }
-    
-
     
     $this->entityManager->persist($customerOrder);
     $this->entityManager->flush();
 
-    return "CustomerOrder created successfully !!";
+    $data=[
+        "id"=> $customerOrder->getId(),
+
+        "Items"=>$customerOrder->getOrderItems()->map(function(OrderItem $orderitem)
+        {
+            return 
+            [
+                "Product"=>$orderitem->getProduct()->getProductname(),
+                "Quantity"=>$orderitem->getQuantity(),
+                "price"=>$orderitem->getPrice(),
+
+            ];
+
+        })->toArray()
+        
+    ];
+    return $data;
 
 }
 

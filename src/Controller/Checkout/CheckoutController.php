@@ -1,23 +1,35 @@
-<!-- <?php
+<?php
 
-// namespace App\Controller\Checkout;
+namespace App\Controller\Checkout;
 
-// use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-// use Symfony\Component\HttpFoundation\JsonResponse;
-// use Symfony\Component\HttpFoundation\Request;
-// use Symfony\Component\HttpFoundation\Response;
-// use Symfony\Component\Routing\Attribute\Route;
+use App\Service\Checkout\CheckoutService;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
 
-// #[Route('/checkout')]  
-// final class CheckoutControllerrder extends AbstractController
-// {
-//   #[Route('', name:'app_checkout_display')]
-//     public function display(Request $request): JsonResponse{
-//         $data=json_decode($request );
+#[Route('/checkout')]  
+final class CheckoutController extends AbstractController
+{
 
-// return  
-//   }
+    private $checkoutService;
+    
+    public function __construct(CheckoutService $checkoutService)
+    {
+        $this->checkoutService=$checkoutService;
+        
+    }
+
+  #[Route('', name:'app_checkout',methods:['POST'] )]
+    public function checkout(Request $request): JsonResponse{
+      $data= $this->checkoutService->processOrder($request);
+
+      return new jsonResponse([
+        "Succes"=>"true",
+        "message"=>$data
+      ]);
+  }
 
 
 
-//}
+} 
