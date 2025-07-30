@@ -2,6 +2,7 @@
 
 namespace App\Entity\Checkout;
 
+use App\Entity\Security\User;
 use App\Entity\Traits\TimestampableTrait;
 use App\Repository\Checkout\CustomerOrderRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -24,6 +25,10 @@ class CustomerOrder
      */
     #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'customerOrder', orphanRemoval: true)]
     private Collection $orderitems;
+
+    #[ORM\ManyToOne(inversedBy: 'customerOrders')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?User $waiter = null;
 
     public function __construct()
     {
@@ -61,6 +66,18 @@ class CustomerOrder
                 $orderitem->setCustomerOrder(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getWaiter(): ?User
+    {
+        return $this->waiter;
+    }
+
+    public function setWaiter(?User $waiter): static
+    {
+        $this->waiter = $waiter;
 
         return $this;
     }

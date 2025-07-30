@@ -2,8 +2,11 @@
 
 namespace App\Entity\Security;
 
+use App\Entity\Checkout\CustomerOrder;
 use App\Entity\Traits\ContactTrait;
 use App\Repository\Security\UserRepository as SecurityUserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -38,6 +41,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 20)]
     private ?string $color = null;
+
+    /**
+     * @var Collection<int, CustomerOrder>
+     */
+    #[ORM\OneToMany(targetEntity: CustomerOrder::class, mappedBy: 'waiter')]
+    private Collection $customerOrders;
+
+    public function __construct()
+    {
+        $this->customerOrders = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -128,6 +142,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setColor(string $color): static
     {
         $this->color = $color;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CustomerOrder>
+     */
+    public function getCustomerOrders(): Collection
+    {
+        return $this->customerOrders;
+    }
+
+    public function addCustomerOrder(CustomerOrder $customerOrder): static
+    {
+        if (!$this->customerOrders->contains($customerOrder)) {
+            $this->customerOrders->add($customerOrder);
+            $customerOrder->setWaiter($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCustomerOrder(CustomerOrder $customerOrder): static
+    {
+        if ($this->customerOrders->removeElement($customerOrder)) {
+            // set the owning side to null (unless already changed)
+            if ($customerOrder->getWaiter() === $this) {
+                $customerOrder->setWaiter(null);
+            }
+        }
 
         return $this;
     }
