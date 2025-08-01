@@ -2,139 +2,100 @@
 
 namespace App\Entity\Checkout;
 
-use App\Entity\Product\Product;
+use App\Entity\Security\User;
+use App\Entity\Traits\TimestampableTrait;
 use App\Repository\Checkout\SaleRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SaleRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Sale
-{
+{   
+    use TimestampableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'sales')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Product $product = null;
-
-    #[ORM\Column]
-    private ?int $quantity = null;
-
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    private ?string $Saleprice = null;
+    private ?string $totalAmount = null;
 
     #[ORM\Column]
-    private ?int $total = null;
+    private ?bool $isPaid = null;
 
-    /**
-     * @var Collection<int, Invoice>
-     */
-    #[ORM\OneToMany(targetEntity: Invoice::class, mappedBy: 'saledate')]
-    private Collection $invoices;
+    #[ORM\OneToOne(inversedBy: 'sale', cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?CustomerOrder $customerOrder = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $Datesale = null;
+    private ?string $PaymentMethod = null;
 
-    public function __construct()
-    {
-        $this->invoices = new ArrayCollection();
-    }
+    #[ORM\ManyToOne(inversedBy: 'sales')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $teller = null;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getProduct(): ?Product
+    public function getTotalAmount(): ?string
     {
-        return $this->product;
+        return $this->totalAmount;
     }
 
-    public function setProduct(?Product $product): static
+    public function setTotalAmount(string $totalAmount): static
     {
-        $this->product = $product;
+        $this->totalAmount = $totalAmount;
 
         return $this;
     }
 
-    public function getQuantity(): ?int
+    public function isPaid(): ?bool
     {
-        return $this->quantity;
+        return $this->isPaid;
     }
 
-    public function setQuantity(int $quantity): static
+    public function setIsPaid(bool $isPaid): static
     {
-        $this->quantity = $quantity;
+        $this->isPaid = $isPaid;
 
         return $this;
     }
 
-    public function getSaleprice(): ?string
+    public function getCustomerOrder(): ?CustomerOrder
     {
-        return $this->Saleprice;
+        return $this->customerOrder;
     }
 
-    public function setSaleprice(string $Saleprice): static
+    public function setCustomerOrder(CustomerOrder $customerOrder): static
     {
-        $this->Saleprice = $Saleprice;
+        $this->customerOrder = $customerOrder;
 
         return $this;
     }
 
-    public function getTotal(): ?int
+    public function getPaymentMethod(): ?string
     {
-        return $this->total;
+        return $this->PaymentMethod;
     }
 
-    public function setTotal(int $total): static
+    public function setPaymentMethod(string $PaymentMethod): static
     {
-        $this->total = $total;
+        $this->PaymentMethod = $PaymentMethod;
 
         return $this;
     }
 
-    /**
-     * @return Collection<int, Invoice>
-     */
-    public function getInvoices(): Collection
+    public function getTeller(): ?User
     {
-        return $this->invoices;
+        return $this->teller;
     }
 
-    public function addInvoice(Invoice $invoice): static
+    public function setTeller(?User $teller): static
     {
-        if (!$this->invoices->contains($invoice)) {
-            $this->invoices->add($invoice);
-            $invoice->setSaledate($this);
-        }
-
-        return $this;
-    }
-
-    public function removeInvoice(Invoice $invoice): static
-    {
-        if ($this->invoices->removeElement($invoice)) {
-            // set the owning side to null (unless already changed)
-            if ($invoice->getSaledate() === $this) {
-                $invoice->setSaledate(null);
-            }
-        }
-
-        return $this;
-    }
-
-    public function getDatesale(): ?string
-    {
-        return $this->Datesale;
-    }
-
-    public function setDatesale(string $Datesale): static
-    {
-        $this->Datesale = $Datesale;
+        $this->teller = $teller;
 
         return $this;
     }

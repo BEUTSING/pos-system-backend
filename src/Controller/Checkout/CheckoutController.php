@@ -20,9 +20,19 @@ final class CheckoutController extends AbstractController
         
     }
 
-  #[Route('', name:'app_checkout',methods:['POST'] )]
-    public function checkout(Request $request): JsonResponse{
+  #[Route('/Order', name:'app_checkout_order',methods:['POST'] )]
+    public function Order(Request $request): JsonResponse{
       $data= $this->checkoutService->processOrder($request);
+
+      return new jsonResponse([
+        "Succes"=>"true",
+        "message"=>$data
+      ]);
+  }
+
+  #[Route('/Sale', name:'app_checkout_sale',methods:['POST'] )]
+    public function sale(Request $request): JsonResponse{
+      $data= $this->checkoutService->createSaleFromOrder($request);
 
       return new jsonResponse([
         "Succes"=>"true",

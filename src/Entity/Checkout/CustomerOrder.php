@@ -27,8 +27,11 @@ class CustomerOrder
     private Collection $orderitems;
 
     #[ORM\ManyToOne(inversedBy: 'customerOrders')]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: false)]
     private ?User $waiter = null;
+
+    #[ORM\OneToOne(mappedBy: 'customerOrder', cascade: ['persist', 'remove'])]
+    private ?Sale $sale = null;
 
     public function __construct()
     {
@@ -78,6 +81,23 @@ class CustomerOrder
     public function setWaiter(?User $waiter): static
     {
         $this->waiter = $waiter;
+
+        return $this;
+    }
+
+    public function getSale(): ?Sale
+    {
+        return $this->sale;
+    }
+
+    public function setSale(Sale $sale): static
+    {
+        // set the owning side of the relation if necessary
+        if ($sale->getCustomerOrder() !== $this) {
+            $sale->setCustomerOrder($this);
+        }
+
+        $this->sale = $sale;
 
         return $this;
     }

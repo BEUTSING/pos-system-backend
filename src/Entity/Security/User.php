@@ -3,6 +3,7 @@
 namespace App\Entity\Security;
 
 use App\Entity\Checkout\CustomerOrder;
+use App\Entity\Checkout\Sale;
 use App\Entity\Traits\ContactTrait;
 use App\Repository\Security\UserRepository as SecurityUserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -48,9 +49,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: CustomerOrder::class, mappedBy: 'waiter')]
     private Collection $customerOrders;
 
+    /**
+     * @var Collection<int, Sale>
+     */
+    #[ORM\OneToMany(targetEntity: Sale::class, mappedBy: 'teller')]
+    private Collection $sales;
+
     public function __construct()
     {
         $this->customerOrders = new ArrayCollection();
+        $this->sales = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -170,6 +178,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($customerOrder->getWaiter() === $this) {
                 $customerOrder->setWaiter(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Sale>
+     */
+    public function getSales(): Collection
+    {
+        return $this->sales;
+    }
+
+    public function addSale(Sale $sale): static
+    {
+        if (!$this->sales->contains($sale)) {
+            $this->sales->add($sale);
+            $sale->setTeller($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSale(Sale $sale): static
+    {
+        if ($this->sales->removeElement($sale)) {
+            // set the owning side to null (unless already changed)
+            if ($sale->getTeller() === $this) {
+                $sale->setTeller(null);
             }
         }
 

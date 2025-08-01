@@ -2,8 +2,6 @@
 
 namespace App\Entity\Product;
 
-use App\Entity\Checkout\Invoice;
-use App\Entity\Checkout\Sale;
 use App\Entity\Stock\Purchaseorder;
 use App\Entity\Stock\Stockmovement;
 use App\Entity\Stock\Supplier;
@@ -41,18 +39,7 @@ class Product
     private Collection $stockmovements;
 
     
-    /**
-     * @var Collection<int, Sale>
-     */
-    #[ORM\OneToMany(targetEntity: Sale::class, mappedBy: 'product')]
-    private Collection $sales;
-
-    /**
-     * @var Collection<int, Invoice>
-     */
-    #[ORM\OneToMany(targetEntity: Invoice::class, mappedBy: 'Productname')]
-    private Collection $invoices;
-
+ 
     /**
      * @var Collection<int, Purchaseorder>
      */
@@ -76,8 +63,6 @@ class Product
     public function __construct()
     {
         $this->stockmovements = new ArrayCollection();
-        $this->sales = new ArrayCollection();
-        $this->invoices = new ArrayCollection();
         $this->purchaseorders = new ArrayCollection();
     }
 
@@ -153,66 +138,6 @@ class Product
     }
 
 
-
-    /**
-     * @return Collection<int, Sale>
-     */
-    public function getSales(): Collection
-    {
-        return $this->sales;
-    }
-
-    public function addSale(Sale $sale): static
-    {
-        if (!$this->sales->contains($sale)) {
-            $this->sales->add($sale);
-            $sale->setProduct($this);
-        }
-
-        return $this;
-    }
-
-    public function removeSale(Sale $sale): static
-    {
-        if ($this->sales->removeElement($sale)) {
-            // set the owning side to null (unless already changed)
-            if ($sale->getProduct() === $this) {
-                $sale->setProduct(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Invoice>
-     */
-    public function getInvoices(): Collection
-    {
-        return $this->invoices;
-    }
-
-    public function addInvoice(Invoice $invoice): static
-    {
-        if (!$this->invoices->contains($invoice)) {
-            $this->invoices->add($invoice);
-            $invoice->setProductname($this);
-        }
-
-        return $this;
-    }
-
-    public function removeInvoice(Invoice $invoice): static
-    {
-        if ($this->invoices->removeElement($invoice)) {
-            // set the owning side to null (unless already changed)
-            if ($invoice->getProductname() === $this) {
-                $invoice->setProductname(null);
-            }
-        }
-
-        return $this;
-    }
 
     /**
      * @return Collection<int, Purchaseorder>
