@@ -20,7 +20,7 @@ final class CheckoutController extends AbstractController
         
     }
 
-  #[Route('/Order', name:'app_checkout_order',methods:['POST'] )]
+  #[Route('/order', name:'app_checkout_order',methods:['POST'] )]
     public function Order(Request $request): JsonResponse{
       $data= $this->checkoutService->processOrder($request);
 
@@ -30,7 +30,7 @@ final class CheckoutController extends AbstractController
       ]);
   }
 
-  #[Route('/Sale', name:'app_checkout_sale',methods:['POST'] )]
+  #[Route('/sale', name:'app_checkout_sale',methods:['POST'] )]
     public function sale(Request $request): JsonResponse{
       $data= $this->checkoutService->createSaleFromOrder($request);
 
@@ -40,6 +40,14 @@ final class CheckoutController extends AbstractController
       ]);
   }
 
+#[Route('/cancel', name:'cancel',methods:['POST'] )]
+    public function cancel(Request $request): JsonResponse{
+      $data= $this->checkoutService->orderItemCanceletion($request);
 
+      return new jsonResponse([
+        "Succes"=>"true",
+        "message"=>$data
+      ]);
+  }
 
 } 
