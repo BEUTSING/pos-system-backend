@@ -2,9 +2,11 @@
 
 namespace App\Service\Checkout;
 
+use App\Entity\Checkout\Cancellation;
 use App\Entity\Checkout\CustomerOrder;
 use App\Entity\Checkout\OrderItem;
 use App\Entity\Checkout\Sale;
+use App\Repository\Checkout\CancellationRepository;
 use App\Repository\Checkout\CustomerOrderRepository;
 use App\Repository\Checkout\OrderItemRepository;
 use App\Repository\Checkout\SaleRepository;
@@ -21,10 +23,11 @@ class CheckoutService
     private $customerorderrepo;
     private $saleRepo;
     private $orderItemrepo;
+    private $cancellationrepo;
     public function __construct(ProductRepository $productRepository, 
                                 EntityManagerInterface $entityManager,
                                 Security $security,
-                                CustomerOrderRepository $customerorderrepo,
+                                CustomerOrderRepository $customerorderrepo,CancellationRepository $cancellationrepo,
                                 SaleRepository $sale_repository,OrderItemRepository $orderItemrepo)
     {
         $this->productRepository = $productRepository;
@@ -33,6 +36,7 @@ class CheckoutService
         $this->customerorderrepo=$customerorderrepo;
         $this->saleRepo = $sale_repository;
         $this->orderItemrepo=$orderItemrepo;
+        $this->cancellationrepo=$cancellationrepo;
     }
     
     public function processOrder(Request $request)
@@ -117,7 +121,9 @@ public function createSaleFromOrder(Request $request){
                 "price"=>$item->getPrice(),
                 "subtotal" => $item->getPrice() * $item->getQuantity(),
                 ];
-            })->toArray()
+            })->toArray(),
+                    "invoice"=>"copy"
+
         ];
         return $data;
     }
@@ -126,6 +132,7 @@ public function createSaleFromOrder(Request $request){
    
     $user=$this->security->getUser();
     $sale->setTeller($user);
+    $sale->setStatut($data['statut']);
 
     $sale-> setCustomerOrder($customerOrder);
     $sale-> setPaymentMethod($data['paymentMethod']);
@@ -143,6 +150,7 @@ public function createSaleFromOrder(Request $request){
 
 $data=[
             "sale_id" => $sale->getId(),
+            // "statut"=>$sale->,
             "teller" => $sale->getTeller()->getName(),
             "order_id" => $customerOrder->getId(),
             "total_amount" => $sale->getTotalAmount(),
@@ -161,7 +169,7 @@ $data=[
 return $data;
 
 }
-public function orderItemCanceletion(Request $request){
+public function orderItemCancellation(Request $request){
         
     $data= json_decode($request->getContent(), true);
     $orderitem=$this->orderItemrepo->find($data['orderItemId']);
@@ -184,7 +192,7 @@ public function orderItemCanceletion(Request $request){
 
 
     $data=[
-        "id"=> $customerOrder->getId(),
+        "id_custormerOrder"=> $customerOrder->getId(),
         "Waiter_id"=>$customerOrder->getWaiter()->getId(),
         "Items"=>$customerOrder->getOrderItems()->map(function(OrderItem $orderitem)
         {
@@ -198,18 +206,71 @@ public function orderItemCanceletion(Request $request){
             ];
 
         })->toArray()
-        
     ];
     return $data;
 }
 
-public function salecancel(Request $request){
+public function cancelSale(Request $request){
 
         $data= json_decode($request->getContent(), true);
-        $orderitem=$this->customerorderrepo->find($data['orderItemId']);
+        $sale=$this->saleRepo->find($data['saleId']);
 
+        if(!$sale){
+            throw new \Exception("sale not found");
+        }
+         $reason=$data['reason'];
 
+        if ($sale->getCancellation() !== null) {
+            throw new \Exception('This sale has already been cancelled.');
+        }
 
+        $user=$this->security->getUser();
+
+        $cancellation= new Cancellation();
+        $cancellation->setUser($user);
+        $cancellation->setSale($sale); 
+        $cancellation->setCancellationReason($reason);
+        
+
+        $customerOrder=$sale->getCustomerOrder();
+        $orderItems=$customerOrder->getOrderItems();
+
+        foreach ($orderItems as $orderItem) {
+            $product = $orderItem->getProduct();
+
+            if (!$product) {
+                throw new \Exception("product not found");
+            }
+
+            $product->setQuantity($product->getQuantity() + $orderItem->getQuantity());
+
+            $customerOrder->removeOrderItem($orderItem);
+            $this->entityManager->persist($product);
+        }
+
+        $this->entityManager->persist($customerOrder);
+        $this->entityManager->persist($cancellation);
+        $this->entityManager->flush();
+       
+        $data=[
+
+            "id_cancel"=>$cancellation->getId(),
+            "sale_id" => $sale->getId(),
+            "teller" => $sale->getTeller()->getName(),
+            "order_id" => $customerOrder->getId(),
+            "total_amount" => $sale->getTotalAmount(),
+            "payment_method" => $sale->getPaymentMethod(),
+            "items" => $customerOrder->getOrderItems()->map(function (OrderItem $item) {
+
+                return [
+                "product_id"=>$item->getId(),
+                "product_name"=>$item->getProduct()->getProductname(),
+                "quantity"=>$item->getQuantity(),
+                "price"=>$item->getPrice(),
+                "subtotal" => $item->getPrice() * $item->getQuantity(),
+                ];
+            })->toArray()
+];
+return $data;
 }
-
 }

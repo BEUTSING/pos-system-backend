@@ -35,6 +35,13 @@ class Sale
     #[ORM\JoinColumn(nullable: false)]
     private ?User $teller = null;
 
+    #[ORM\OneToOne(mappedBy: 'sale', cascade: ['persist', 'remove'])]
+    private ?Cancellation $cancellation = null;
+
+    #[ORM\Column(length: 50)]
+
+    private ?string $statut = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -96,6 +103,35 @@ class Sale
     public function setTeller(?User $teller): static
     {
         $this->teller = $teller;
+
+        return $this;
+    }
+
+    public function getCancellation(): ?Cancellation
+    {
+        return $this->cancellation;
+    }
+
+    public function setCancellation(Cancellation $cancellation): static
+    {
+        // set the owning side of the relation if necessary
+        if ($cancellation->getSale() !== $this) {
+            $cancellation->setSale($this);
+        }
+
+        $this->cancellation = $cancellation;
+
+        return $this;
+    }
+
+    public function getStatut(): ?string
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(string $statut): static
+    {
+        $this->statut = $statut;
 
         return $this;
     }

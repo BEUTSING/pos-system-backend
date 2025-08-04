@@ -2,6 +2,7 @@
 
 namespace App\Entity\Security;
 
+use App\Entity\Checkout\Cancellation;
 use App\Entity\Checkout\CustomerOrder;
 use App\Entity\Checkout\Sale;
 use App\Entity\Traits\ContactTrait;
@@ -55,10 +56,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Sale::class, mappedBy: 'teller')]
     private Collection $sales;
 
+    /**
+     * @var Collection<int, Cancellation>
+     */
+    #[ORM\OneToMany(targetEntity: Cancellation::class, mappedBy: 'user')]
+    private Collection $cancellations;
+
     public function __construct()
     {
         $this->customerOrders = new ArrayCollection();
         $this->sales = new ArrayCollection();
+        $this->cancellations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -213,4 +221,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, Cancellation>
+     */
+    public function getCancellations(): Collection
+    {
+        return $this->cancellations;
+    }
+
+    public function addCancellation(Cancellation $cancellation): static
+    {
+        if (!$this->cancellations->contains($cancellation)) {
+            $this->cancellations->add($cancellation);
+            $cancellation->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCancellation(Cancellation $cancellation): static
+    {
+        if ($this->cancellations->removeElement($cancellation)) {
+            // set the owning side to null (unless already changed)
+            if ($cancellation->getUser() === $this) {
+                $cancellation->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
 }

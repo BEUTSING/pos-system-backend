@@ -42,7 +42,17 @@ final class CheckoutController extends AbstractController
 
 #[Route('/cancel', name:'cancel',methods:['POST'] )]
     public function cancel(Request $request): JsonResponse{
-      $data= $this->checkoutService->orderItemCanceletion($request);
+      $data= $this->checkoutService->orderItemCancellation($request);
+
+      return new jsonResponse([
+        "Succes"=>"true",
+        "message"=>$data
+      ]);
+  }
+
+  #[Route('/cancelsale', name:'slcancel',methods:['POST'] )]
+    public function cancelSale(Request $request): JsonResponse{
+      $data= $this->checkoutService->cancelSale($request);
 
       return new jsonResponse([
         "Succes"=>"true",
