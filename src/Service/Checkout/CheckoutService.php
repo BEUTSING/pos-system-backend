@@ -179,10 +179,10 @@ public function orderItemCancellation(Request $request){
     $product=$orderitem->getProduct();
     $customerOrder = $orderitem->getCustomerOrder();
 
-    if(!$orderitem){
-            throw new \Exception('the quantity in stock is insufficient
-');
-    }
+//     if(!$orderitem){
+//             throw new \Exception('the quantity in stock is insufficient
+// ');
+//     }
 
     if($quantity !== null){
 
@@ -196,30 +196,26 @@ public function orderItemCancellation(Request $request){
         }
 
         $product->setQuantity($product->getQuantity() - $diff);
-        $newQuantity = $currentQuantity + $diff;
 
     } else {
         $diff = $currentQuantity - $quantity;
         $product->setQuantity($product->getQuantity() + $diff);
-        $newQuantity = $currentQuantity - $diff;
     }
     
-    if($newQuantity<=0){
-        $currentQuantity->removeOrderItem($orderitem);
+    if($quantity<=0){
+        $customerOrder->removeOrderItem($orderitem);
         $this->entityManager->remove($orderitem);
             $message = 'OrderItem has been fully cancelled and removed from the order.';
     } else{
-            $orderitem->setQuantity($newQuantity);
+            $orderitem->setQuantity($quantity);
             $message = 'OrderItem quantity has been updated.';
      }
 
         //persit
          $this->entityManager->persist($product);
-        if ($newQuantity > 0) {
+        if ($quantity > 0) {
             $this->entityManager->persist($orderitem);
         }
-        $this->entityManager->flush();
-
         $data[]=[
             'itemid'=> $orderitem->getId(),
             'orderid'=> $customerOrder->getId(),
@@ -238,23 +234,29 @@ public function orderItemCancellation(Request $request){
         })->toArray()
     ];
     return $data;
+ }else{
+
+    $product->setQuantity($product->getQuantity()+$orderitem->getQuantity());
+    $customerOrder = $orderitem->getCustomerOrder();
+    $customerOrder->removeOrderItem($orderitem);
+    $this->entityManager->remove($orderitem);
+        $this->entityManager->persist($product);
     }
 
-    $customerOrder = $orderitem->getCustomerOrder();
 
-    $product=$orderitem->getProduct();
-    $product->setQuantity($product->getQuantity()+$orderitem->getQuantity());
+    $isEmpty = $customerOrder->getOrderItems()->isEmpty();
 
-    $customerOrder->removeOrderItem($orderitem);
-    $this->entityManager->persist($customerOrder);
-    $this->entityManager->persist($product);
-    
+    if ($isEmpty) {
+        $idcustomerorder = $customerOrder->getId();
+        $waiterId = $customerOrder->getWaiter()->getId();
+        $this->entityManager->remove($customerOrder);
+    }
+
     $this->entityManager->flush();
 
-
     $data=[
-        "id_custormerOrder"=> $customerOrder->getId(),
-        "Waiter_id"=>$customerOrder->getWaiter()->getId(),
+        "id_custormerOrder"=> $idcustomerorder,
+        "Waiter_id"=>$waiterId,
         "Items"=>$customerOrder->getOrderItems()->map(function(OrderItem $orderitem)
         {
             return 
@@ -263,7 +265,6 @@ public function orderItemCancellation(Request $request){
                 "Product_name"=>$orderitem->getProduct()->getProductname(),
                 "Quantity"=>$orderitem->getQuantity(),
                 "price"=>$orderitem->getPrice(),
-
             ];
 
         })->toArray()
@@ -298,7 +299,7 @@ public function cancelSale(Request $request){
             $this->entityManager->persist($product);
         }
 
-        $sale->setStatut(SaleStatut::CANCELLED);
+        $sale->setStatut(SaleStatut::CANCELLED->value);
         $this->entityManager->persist($sale);
 
         $cancellation= new Cancellation();
