@@ -6,6 +6,8 @@ use App\Entity\Checkout\Cancellation;
 use App\Entity\Checkout\CustomerOrder;
 use App\Entity\Checkout\OrderItem;
 use App\Entity\Checkout\Sale;
+use App\Enum\SaleStatus;
+use App\Enum\SaleStatut;
 use App\Repository\Checkout\CancellationRepository;
 use App\Repository\Checkout\CustomerOrderRepository;
 use App\Repository\Checkout\OrderItemRepository;
@@ -132,7 +134,7 @@ public function createSaleFromOrder(Request $request){
    
     $user=$this->security->getUser();
     $sale->setTeller($user);
-    $sale->setStatut($data['statut']);
+    $sale->setStatut(SaleStatut::PENDING->value);
 
     $sale-> setCustomerOrder($customerOrder);
     $sale-> setPaymentMethod($data['paymentMethod']);
@@ -150,7 +152,7 @@ public function createSaleFromOrder(Request $request){
 
 $data=[
             "sale_id" => $sale->getId(),
-            // "statut"=>$sale->,
+            "statut"=>$sale->getStatut(),
             "teller" => $sale->getTeller()->getName(),
             "order_id" => $customerOrder->getId(),
             "total_amount" => $sale->getTotalAmount(),
@@ -173,10 +175,69 @@ public function orderItemCancellation(Request $request){
         
     $data= json_decode($request->getContent(), true);
     $orderitem=$this->orderItemrepo->find($data['orderItemId']);
-
+    $quantity=$data['quantity']?? null;
+    $product=$orderitem->getProduct();
+    $customerOrder = $orderitem->getCustomerOrder();
 
     if(!$orderitem){
-            throw new \Exception('Item not found');
+            throw new \Exception('the quantity in stock is insufficient
+');
+    }
+
+    if($quantity !== null){
+
+    $currentQuantity=$orderitem->getQuantity();
+
+    if ($currentQuantity < $quantity) {
+        $diff = $quantity - $currentQuantity;
+
+        if ($product->getQuantity() < $diff) {
+            throw new \Exception('the quantity in stock is insufficient');
+        }
+
+        $product->setQuantity($product->getQuantity() - $diff);
+        $newQuantity = $currentQuantity + $diff;
+
+    } else {
+        $diff = $currentQuantity - $quantity;
+        $product->setQuantity($product->getQuantity() + $diff);
+        $newQuantity = $currentQuantity - $diff;
+    }
+    
+    if($newQuantity<=0){
+        $currentQuantity->removeOrderItem($orderitem);
+        $this->entityManager->remove($orderitem);
+            $message = 'OrderItem has been fully cancelled and removed from the order.';
+    } else{
+            $orderitem->setQuantity($newQuantity);
+            $message = 'OrderItem quantity has been updated.';
+     }
+
+        //persit
+         $this->entityManager->persist($product);
+        if ($newQuantity > 0) {
+            $this->entityManager->persist($orderitem);
+        }
+        $this->entityManager->flush();
+
+        $data[]=[
+            'itemid'=> $orderitem->getId(),
+            'orderid'=> $customerOrder->getId(),
+            'message' => $message,
+            'items'=>$customerOrder->getOrderItems()->map(function(OrderItem $orderitem)
+        {
+            return 
+            [
+                "product_id"=>$orderitem->getId(),
+                "Product_name"=>$orderitem->getProduct()->getProductname(),
+                "Quantity"=>$orderitem->getQuantity(),
+                "price"=>$orderitem->getPrice(),
+                "new_quantity_item"=>$orderitem->getQuantity(),
+            ];
+
+        })->toArray()
+    ];
+    return $data;
     }
 
     $customerOrder = $orderitem->getCustomerOrder();
@@ -226,35 +287,32 @@ public function cancelSale(Request $request){
 
         $user=$this->security->getUser();
 
-        $cancellation= new Cancellation();
-        $cancellation->setUser($user);
-        $cancellation->setSale($sale); 
-        $cancellation->setCancellationReason($reason);
-        
-
         $customerOrder=$sale->getCustomerOrder();
         $orderItems=$customerOrder->getOrderItems();
 
         foreach ($orderItems as $orderItem) {
             $product = $orderItem->getProduct();
 
-            if (!$product) {
-                throw new \Exception("product not found");
-            }
-
             $product->setQuantity($product->getQuantity() + $orderItem->getQuantity());
 
-            $customerOrder->removeOrderItem($orderItem);
             $this->entityManager->persist($product);
         }
 
-        $this->entityManager->persist($customerOrder);
+        $sale->setStatut(SaleStatut::CANCELLED);
+        $this->entityManager->persist($sale);
+
+        $cancellation= new Cancellation();
+        $cancellation->setUser($user);
+        $cancellation->setSale($sale); 
+        $cancellation->setCancellationReason($reason);
         $this->entityManager->persist($cancellation);
         $this->entityManager->flush();
        
         $data=[
 
             "id_cancel"=>$cancellation->getId(),
+            "cancelled_by" => $cancellation->getUser(),
+            "reason" => $cancellation->getCancellationreason(),
             "sale_id" => $sale->getId(),
             "teller" => $sale->getTeller()->getName(),
             "order_id" => $customerOrder->getId(),
