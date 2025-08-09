@@ -6,7 +6,6 @@ use App\Entity\Checkout\Cancellation;
 use App\Entity\Checkout\CustomerOrder;
 use App\Entity\Checkout\OrderItem;
 use App\Entity\Checkout\Sale;
-use App\Enum\SaleStatus;
 use App\Enum\SaleStatut;
 use App\Repository\Checkout\CancellationRepository;
 use App\Repository\Checkout\CustomerOrderRepository;
@@ -90,6 +89,8 @@ class CheckoutService
                 "Product_name"=>$orderitem->getProduct()->getProductname(),
                 "Quantity"=>$orderitem->getQuantity(),
                 "price"=>$orderitem->getPrice(),
+                "date_create"=>$orderitem->getCreatedAt()->format("Y-m-d H:i:s"),
+                "date_update"=>$orderitem->getUpdatedAt()->format("Y-m-d H:i:s"),
 
             ];
 
@@ -122,6 +123,8 @@ public function createSaleFromOrder(Request $request){
                 "quantity"=>$item->getQuantity(),
                 "price"=>$item->getPrice(),
                 "subtotal" => $item->getPrice() * $item->getQuantity(),
+                "date_create"=>$item->getCreatedAt()->format("Y-m-d H:i:s"),
+                "date_update"=>$item->getUpdatedAt()->format("Y-m-d H:i:s"),
                 ];
             })->toArray(),
                     "invoice"=>"copy"
@@ -165,6 +168,8 @@ $data=[
                 "quantity"=>$item->getQuantity(),
                 "price"=>$item->getPrice(),
                 "subtotal" => $item->getPrice() * $item->getQuantity(),
+                "date_create"=>$item->getCreatedAt()->format("Y-m-d H:i:s"),
+                "date_update"=>$item->getUpdatedAt()->format("Y-m-d H:i:s"),
                 ];
             })->toArray()
 ];
@@ -174,15 +179,18 @@ return $data;
 public function orderItemCancellation(Request $request){
         
     $data= json_decode($request->getContent(), true);
+    if($data["quantity"]<=0){
+        throw new \Exception("Qauntity must be greater than zero");
+    }
     $orderitem=$this->orderItemrepo->find($data['orderItemId']);
-    $quantity=$data['quantity']?? null;
+    if (!$orderitem) {
+    throw new \Exception('The order item was not found.');
+}
+    $quantity=$data['quantity'];
+
     $product=$orderitem->getProduct();
     $customerOrder = $orderitem->getCustomerOrder();
 
-//     if(!$orderitem){
-//             throw new \Exception('the quantity in stock is insufficient
-// ');
-//     }
 
     if($quantity !== null){
 
@@ -202,33 +210,29 @@ public function orderItemCancellation(Request $request){
         $product->setQuantity($product->getQuantity() + $diff);
     }
     
-    if($quantity<=0){
-        $customerOrder->removeOrderItem($orderitem);
-        $this->entityManager->remove($orderitem);
-            $message = 'OrderItem has been fully cancelled and removed from the order.';
-    } else{
+ 
             $orderitem->setQuantity($quantity);
             $message = 'OrderItem quantity has been updated.';
-     }
+            $this->entityManager->persist($orderitem);
 
         //persit
-         $this->entityManager->persist($product);
-        if ($quantity > 0) {
-            $this->entityManager->persist($orderitem);
-        }
+        $this->entityManager->persist($product);
+        $this->entityManager->flush();
         $data[]=[
             'itemid'=> $orderitem->getId(),
             'orderid'=> $customerOrder->getId(),
             'message' => $message,
+            "current_quantity"=>$currentQuantity,
             'items'=>$customerOrder->getOrderItems()->map(function(OrderItem $orderitem)
         {
             return 
             [
                 "product_id"=>$orderitem->getId(),
-                "Product_name"=>$orderitem->getProduct()->getProductname(),
-                "Quantity"=>$orderitem->getQuantity(),
+                "product_name"=>$orderitem->getProduct()->getProductname(),
                 "price"=>$orderitem->getPrice(),
                 "new_quantity_item"=>$orderitem->getQuantity(),
+                "date_create"=>$orderitem->getCreatedAt()->format("Y-m-d H:i:s"),
+                "date_update"=>$orderitem->getUpdatedAt()->format("Y-m-d H:i:s"),
             ];
 
         })->toArray()
@@ -237,15 +241,15 @@ public function orderItemCancellation(Request $request){
  }else{
 
     $product->setQuantity($product->getQuantity()+$orderitem->getQuantity());
-    $customerOrder = $orderitem->getCustomerOrder();
     $customerOrder->removeOrderItem($orderitem);
     $this->entityManager->remove($orderitem);
         $this->entityManager->persist($product);
     }
-
-
+    
+    
+    $idcustomerorder = null;
+    $waiterId = null;
     $isEmpty = $customerOrder->getOrderItems()->isEmpty();
-
     if ($isEmpty) {
         $idcustomerorder = $customerOrder->getId();
         $waiterId = $customerOrder->getWaiter()->getId();
@@ -265,6 +269,8 @@ public function orderItemCancellation(Request $request){
                 "Product_name"=>$orderitem->getProduct()->getProductname(),
                 "Quantity"=>$orderitem->getQuantity(),
                 "price"=>$orderitem->getPrice(),
+                "date_create"=>$orderitem->getCreatedAt()->format("Y-m-d H:i:s"),
+                "date_update"=>$orderitem->getUpdatedAt()->format("Y-m-d H:i:s"),
             ];
 
         })->toArray()
@@ -327,6 +333,8 @@ public function cancelSale(Request $request){
                 "quantity"=>$item->getQuantity(),
                 "price"=>$item->getPrice(),
                 "subtotal" => $item->getPrice() * $item->getQuantity(),
+                "date_create"=>$item->getCreatedAt()->format("Y-m-d H:i:s"),
+                "date_update"=>$item->getUpdatedAt()->format("Y-m-d H:i:s"),
                 ];
             })->toArray()
 ];
