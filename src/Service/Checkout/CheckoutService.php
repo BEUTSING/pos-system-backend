@@ -70,7 +70,7 @@ class CheckoutService
             $customerOrder->addOrderItem($orderitem);
 
             $product->setQuantity($product->getQuantity()-$orderitem->getQuantity());
-            $this->entityManager->persist($product);
+            $this->entityManager->persist(object: $product);
 
 
     }
@@ -176,23 +176,76 @@ $data=[
 return $data;
 
 }
+
+public function addOrderItemToOrder(Request $request){
+
+    $data= json_decode($request->getContent(), true);
+    $customerOrder=$this->customerorderrepo->find($data['customerOrderId']);
+    if (!$customerOrder) {
+        throw new \Exception('Customer order not found');
+    }
+
+    $product = $this->productRepository->find($data['productId']);
+    if (!$product) {
+        throw new \Exception('Product not found');
+    }
+
+    if($data['quantity'] > $product->getQuantity())
+        throw new \Exception('the quantity in stock is insufficient');
+
+    $neworderitem = new OrderItem();
+    $neworderitem->setProduct($product);
+    $neworderitem->setQuantity($data['quantity']);
+    $neworderitem->setPrice($product->getSaleprice());
+
+    $this->entityManager->persist($neworderitem);
+
+    $customerOrder->addOrderItem($neworderitem);
+
+    $product->setQuantity($product->getQuantity()-$neworderitem->getQuantity());
+    $this->entityManager->persist($product);
+    
+    $this->entityManager->persist($customerOrder);
+    $this->entityManager->flush();
+
+    return [
+        "message" => "Order item added successfully",
+        "order_id" => $customerOrder->getId(),
+        "items" => $customerOrder->getOrderItems()->map(function(OrderItem $orderitem)
+        {
+            return 
+            [
+                "product_id"=>$orderitem->getId(),
+                "Product_name"=>$orderitem->getProduct()->getProductname(),
+                "Quantity"=>$orderitem->getQuantity(),
+                "price"=>$orderitem->getPrice(),
+                "date_create"=>$orderitem->getCreatedAt()->format("Y-m-d H:i:s"),
+                "date_update"=>$orderitem->getUpdatedAt()->format("Y-m-d H:i:s"),
+            ];
+
+        })->toArray()
+        
+    ];
+}
 public function orderItemCancellation(Request $request){
         
     $data= json_decode($request->getContent(), true);
-    if($data["quantity"]<=0){
-        throw new \Exception("Qauntity must be greater than zero");
+    $quantity=$data['quantity']?? null;
+
+
+    if($quantity<=0){
+        throw new \Exception("Quantity must be greater than zero");
     }
     $orderitem=$this->orderItemrepo->find($data['orderItemId']);
     if (!$orderitem) {
     throw new \Exception('The order item was not found.');
 }
-    $quantity=$data['quantity'];
 
     $product=$orderitem->getProduct();
     $customerOrder = $orderitem->getCustomerOrder();
 
 
-    if($quantity !== null){
+    if($quantity){
 
     $currentQuantity=$orderitem->getQuantity();
 
@@ -240,23 +293,18 @@ public function orderItemCancellation(Request $request){
     return $data;
  }else{
 
-    $product->setQuantity($product->getQuantity()+$orderitem->getQuantity());
-    $customerOrder->removeOrderItem($orderitem);
-    $this->entityManager->remove($orderitem);
+   $product->setQuantity($product->getQuantity() + $orderitem->getQuantity());
+        $customerOrder->removeOrderItem($orderitem);
+        $this->entityManager->remove($orderitem);
         $this->entityManager->persist($product);
-    }
-    
-    
-    $idcustomerorder = null;
-    $waiterId = null;
-    $isEmpty = $customerOrder->getOrderItems()->isEmpty();
-    if ($isEmpty) {
-        $idcustomerorder = $customerOrder->getId();
-        $waiterId = $customerOrder->getWaiter()->getId();
-        $this->entityManager->remove($customerOrder);
-    }
-
-    $this->entityManager->flush();
+ }
+        $orderIsEmpty = $customerOrder->getOrderItems()->isEmpty();
+        if ($orderIsEmpty) {
+            $idcustomerorder = $customerOrder->getId();
+            $waiterId = $customerOrder->getWaiter()->getId();
+            $this->entityManager->remove($customerOrder);
+        }
+        $this->entityManager->flush();
 
     $data=[
         "id_custormerOrder"=> $idcustomerorder,

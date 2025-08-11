@@ -51,9 +51,7 @@ class StatisticService
 
 //get a list of sales
 public function getAllSales(){
-    dd("");
      $sales = $this->salerepository->findAll();
-     dd(vars: $sales);
         return $this->formatSalesData($sales);
 } 
 

@@ -30,6 +30,18 @@ final class CheckoutController extends AbstractController
       ]);
   }
 
+  #[Route("/add", name:"app_checkout_addItem", methods: ["POST"])]
+  
+  public function addOrderItemToOrder(Request $request): JsonResponse{
+
+    $data= $this->checkoutService->addOrderItemToOrder($request);
+
+    return new JsonResponse([
+        "Success" => "true",
+        "message" => $data
+    ]);
+  }
+
   #[Route('/sale', name:'app_checkout_sale',methods:['POST'] )]
     public function sale(Request $request): JsonResponse{
       $data= $this->checkoutService->createSaleFromOrder($request);

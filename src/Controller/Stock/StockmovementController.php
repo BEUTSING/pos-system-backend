@@ -58,6 +58,7 @@ final class StockmovementController extends AbstractController
         $movement->setTypemovement($data['typemovement']);
         $movement->setReason($data['reason']);
 
+        
         switch ($movement->getTypemovement()) {
             case 'in':
                 $product->setQuantity($product->getQuantity() + $movement->getQuantity());
