@@ -12,9 +12,11 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/supplier')]
 final class SupplierController extends AbstractController
+
 {
     private LogEntryService $logEntryService;
     public function __construct(private Security $security, LogEntryService $logEntryService)
@@ -22,7 +24,7 @@ final class SupplierController extends AbstractController
         $this->logEntryService = $logEntryService;
     }
     
-    #[Route('', name: 'app_supplier_display', methods: ['GET'])]
+    #[Route('/list', name: 'app_supplier_display', methods: ['GET'])]
     public function display(SupplierRepository $supplierRepository): JsonResponse
     {
         return $this->json($supplierRepository->findAll(), Response::HTTP_OK);
@@ -30,6 +32,8 @@ final class SupplierController extends AbstractController
 
 
     #[Route('/search/{sname}', name: 'app_supplier_search', methods: ['GET'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function search(SupplierRepository $supplierRepository, string $sname): JsonResponse
     {
         $suppliers = $supplierRepository->findsupplier($sname);
@@ -50,7 +54,9 @@ final class SupplierController extends AbstractController
         return $this->json($data, Response::HTTP_OK);
 }
 
-    #[Route('', name: 'app_supplier_create', methods: ['POST'])]
+    #[Route('/create', name: 'app_supplier_create', methods: ['POST'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function create(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -68,7 +74,9 @@ final class SupplierController extends AbstractController
         return $this->json(['message' => 'Supplier created successfully'], Response::HTTP_CREATED);
     }
 
-    #[Route('/{id}', name: 'app_supplier_update', methods: ['PUT'])]
+    #[Route('/modify/{id}', name: 'app_supplier_update', methods: ['PUT'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function update(Supplier $supplier, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -86,7 +94,9 @@ final class SupplierController extends AbstractController
     
     }
 
-    #[Route('/{id}', name: 'app_supplier_delete', methods: ['DELETE'])]
+    #[Route('/delete/{id}', name: 'app_supplier_delete', methods: ['DELETE'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function delete(Supplier $supplier, EntityManagerInterface $em): JsonResponse
     {
         $em->remove($supplier);

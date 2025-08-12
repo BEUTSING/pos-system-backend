@@ -58,12 +58,12 @@ class CheckoutService
             if($item['quantity'] > $product->getQuantity())
                 throw new \Exception('the quantity in stock is insufficient');
 
-            
+
             $orderitem = new OrderItem();
             $orderitem->setProduct($product);
             $orderitem->setQuantity($item['quantity']);
             $orderitem->setPrice($product->getSaleprice());
-            
+            $total += $orderitem->getPrice() * $orderitem->getQuantity();
 
             $this->entityManager->persist($orderitem);
 
@@ -81,6 +81,8 @@ class CheckoutService
     $data=[
         "id"=> $customerOrder->getId(),
         "Waiter_id"=>$customerOrder->getWaiter()->getId(),
+        "total_amount" => $total,
+
         "Items"=>$customerOrder->getOrderItems()->map(function(OrderItem $orderitem)
         {
             return 
@@ -208,9 +210,15 @@ public function addOrderItemToOrder(Request $request){
     $this->entityManager->persist($customerOrder);
     $this->entityManager->flush();
 
+    $totalAmount = 0;
+    foreach ($customerOrder->getOrderItems() as $orderitem) {
+        $totalAmount += $orderitem->getPrice() * $orderitem->getQuantity();
+    }
+
     return [
         "message" => "Order item added successfully",
         "order_id" => $customerOrder->getId(),
+        "total_amount" => $totalAmount,
         "items" => $customerOrder->getOrderItems()->map(function(OrderItem $orderitem)
         {
             return 

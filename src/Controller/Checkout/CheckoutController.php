@@ -7,13 +7,13 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/checkout')]  
 final class CheckoutController extends AbstractController
 {
 
     private $checkoutService;
-    
     public function __construct(CheckoutService $checkoutService)
     {
         $this->checkoutService=$checkoutService;
@@ -21,7 +21,9 @@ final class CheckoutController extends AbstractController
     }
 
   #[Route('/order', name:'app_checkout_order',methods:['POST'] )]
-    public function Order(Request $request): JsonResponse{
+  #[IsGranted(attribute: 'ROLE_WAITER')]
+
+  public function Order(Request $request): JsonResponse{
       $data= $this->checkoutService->processOrder($request);
 
       return new jsonResponse([
@@ -43,7 +45,9 @@ final class CheckoutController extends AbstractController
   }
 
   #[Route('/sale', name:'app_checkout_sale',methods:['POST'] )]
-    public function sale(Request $request): JsonResponse{
+  #[IsGranted(attribute: 'ROLE_TELLER')]
+  
+  public function sale(Request $request): JsonResponse{
       $data= $this->checkoutService->createSaleFromOrder($request);
 
       return new jsonResponse([
@@ -53,6 +57,8 @@ final class CheckoutController extends AbstractController
   }
 
 #[Route('/cancel', name:'cancel',methods:['POST'] )]
+#[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function cancel(Request $request): JsonResponse{
       $data= $this->checkoutService->orderItemCancellation($request);
 
@@ -63,7 +69,9 @@ final class CheckoutController extends AbstractController
   }
 
   #[Route('/cancelsale', name:'slcancel',methods:['POST'] )]
-    public function cancelSale(Request $request): JsonResponse{
+  #[IsGranted(attribute: 'ROLE_MANAGER')]
+ 
+  public function cancelSale(Request $request): JsonResponse{
       $data= $this->checkoutService->cancelSale($request);
 
       return new jsonResponse([

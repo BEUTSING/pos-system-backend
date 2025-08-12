@@ -1,4 +1,10 @@
 security:
+    role_hierarchy:
+        ROLE_ADMIN: [ROLE_MANAGER, ROLE_TELLER]
+        ROLE_MANAGER: [ROLE_USER]
+        ROLE_TELLER: [ROLE_WAITER]
+        ROLE_WAITER: [ROLE_USER]
+
     password_hashers:
         App\Entity\Security\User:
             algorithm: auto
@@ -33,4 +39,30 @@ security:
 
     access_control:
         - { path: ^/api/v1/login, roles: PUBLIC_ACCESS }
+        
+        # Routes statistic
+        - { path: ^/sale_history, roles: ROLE_TELLER }
+        
+        # Routes checkout
+        - { path: ^/checkout/order, roles: ROLE_WAITER }
+        - { path: ^/checkout/add, roles: ROLE_WAITER }
+        - { path: ^/checkout/sale, roles: ROLE_TELLER }
+        - { path: ^/checkout/cancel, roles: ROLE_MANAGER }
+        - { path: ^/checkout/cancelsale, roles: ROLE_MANAGER }
+        
+        # Routes checkout
+        - { path: ^/stock_movement,  roles: ROLE_MANAGER }                
+        
+        # Routes user
+        - { path: ^/register,  roles: ROLE_ADMIN}
+        
+        # Routes category
+        - { path: ^/category,  roles: ROLE_MANAGER}
+        
+        # Routes product
+        - { path: ^/product,  roles: ROLE_MANAGER}
+
+        # Routes supplier
+        - { path: ^/supplier,  roles: ROLE_MANAGER}
+
         - { path: ^/api/v1,       roles: IS_AUTHENTICATED_FULLY }

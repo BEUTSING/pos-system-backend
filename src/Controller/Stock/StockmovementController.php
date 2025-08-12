@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
  #[Route('/stock-movement')]
 final class StockmovementController extends AbstractController
@@ -26,7 +27,9 @@ final class StockmovementController extends AbstractController
     }   
 
 
-    #[Route('', name: 'app_stockmovement_display', methods: ['GET'])]
+    #[Route('/list', name: 'app_stockmovement_display', methods: ['GET'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function display(StockmovementRepository $repo): JsonResponse
     {
         $stockMovements = $repo->findAll();
@@ -38,13 +41,15 @@ final class StockmovementController extends AbstractController
                 'quantity' => $movement->getQuantity(),
                 'typemovement' => $movement->getTypemovement(),
                 'reason' => $movement->getReason(),
-                'date' => $movement->getDate()->format('Y-m-d H:i:s'),
-            ];
+                'createdAt' => $movement->getCreatedAt()->format('Y-m-d H:i:s'),
+                'upadateAt' => $movement->getUpdatedAt()->format('Y-m-d H:i:s'),];
         }
         return $this->json($data, Response::HTTP_OK);
     }
    
-    #[Route('', name: 'app_stockmovement_create', methods: ['POST'])]
+    #[Route('/create', name: 'app_stockmovement_create', methods: ['POST'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function create(Stockmovement $movement, EntityManagerInterface $em, Request $request,ProductRepository $productrepository): JsonResponse
     {
         $data= json_decode($request->getContent(), true);
@@ -58,6 +63,14 @@ final class StockmovementController extends AbstractController
         $movement->setTypemovement($data['typemovement']);
         $movement->setReason($data['reason']);
 
+
+            if($movement->getTypemovement()=='out'){
+                
+                if($data['quantity'] > $product->getQuantity()){
+                    return $this->json(['error' => 'Insufficient stock for this product'], Response::HTTP_BAD_REQUEST);
+                }
+            
+            }
         
         switch ($movement->getTypemovement()) {
             case 'in':
@@ -87,7 +100,9 @@ final class StockmovementController extends AbstractController
         return $this->json($data, Response::HTTP_CREATED);
     }
 
-#[Route('/{id}', name: 'app_stockmovement_update', methods: ['POST'])]
+#[Route('modify/{id}', name: 'app_stockmovement_update', methods: ['POST'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function update(Stockmovement $movement, EntityManagerInterface $em, Request $request, ProductRepository $productrepository): JsonResponse
     {
         $data= Json_decode($request->getContent(), true);
@@ -109,7 +124,12 @@ final class StockmovementController extends AbstractController
     $this->logEntryService->createLogEntry('Stock movement update for product: ' . $product->getProductname() . ' with quantity: ' . $movement->getQuantity());
         return $this->json($movement, Response::HTTP_OK);
     }
-    #[Route('/{id}', name: 'app_stockmovement_delete', methods: ['DELETE'])]
+
+
+
+    #[Route('delete/{id}', name: 'app_stockmovement_delete', methods: ['DELETE'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function delete(Stockmovement $movement, EntityManagerInterface $em, Product $product): JsonResponse
     {
         $em->remove($movement);

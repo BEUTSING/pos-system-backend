@@ -3,6 +3,7 @@
 namespace App\Controller\SecurityController;
 
 use App\Entity\Security\User;
+use App\Repository\Security\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,7 +15,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class RegisterController extends AbstractController
 {
-    #[Route('/register', name: 'app_register', methods: ['POST'])]
+    #[Route('/register/create', name: 'app_register_create', methods: ['POST'])]
     public function register(Request $request,EntityManagerInterface $em,UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $data=json_decode($request->getContent(), true);
@@ -30,5 +31,32 @@ final class RegisterController extends AbstractController
         $em->persist($user);
         $em->flush();
         return new JsonResponse(['status=> The user has been created successfully'],Response::HTTP_CREATED);
+    }
+
+    #[Route('/register/modifier', name:'app_regiter', methods: ['PUT'])]
+
+    public function updateregister(Request $request, EntityManagerInterface $entityManager,UserRepository $userrepo,UserPasswordHasherInterface $passwordHasher): JsonResponse{
+        $data=json_decode($request->getContent(), true);
+
+        $user = $entityManager->$userrepo->find($data['id']);
+        if (!$user) {
+            throw new \Exception("User not found" );
+        }
+
+        if (isset($data["name"])) $user->setName($data["name"]);
+        if (isset($data["phone"])) $user->setPhone($data["phone"]);
+        if (isset($data["city"])) $user->setCity($data["city"]);
+        if (isset($data["color"])) $user->setColor($data["color"]);
+        if (isset($data["email"])) $user->setEmail($data["email"]);
+
+        
+       
+        $user->setRole($data["role"]);
+        if (isset($data["password"]))
+        $user->setPassword($passwordHasher->hashPassword($user, $data["password"]));
+
+        $entityManager->flush();
+        return new JsonResponse(['status' => 'User updated successfully'], Response::HTTP_OK);
+
     }
 }

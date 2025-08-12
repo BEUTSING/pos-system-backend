@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class ProductController extends AbstractController
 {
@@ -24,6 +25,8 @@ final class ProductController extends AbstractController
     }
 
     #[Route('/product/search/{pname}', name: 'app_product_search', methods: ['GET'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function search(ProductRepository $repo, string $pname): JsonResponse
     {
         $products = $repo->findProduct($pname);
@@ -46,7 +49,9 @@ final class ProductController extends AbstractController
         return $this->json($data, Response::HTTP_OK);
     }
 
-    #[Route('/product', name: 'app_product_display', methods: ['GET'])]
+    #[Route('/product/list', name: 'app_product_display', methods: ['GET'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function display(ProductRepository $repos): JsonResponse
     {
        $products = $repos->findAll();
@@ -68,7 +73,9 @@ final class ProductController extends AbstractController
 
     }
 
-    #[Route('/product', name: 'app_product_create', methods: ['POST'])]
+    #[Route('/product/create', name: 'app_product_create', methods: ['POST'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function create(Request $request, EntityManagerInterface $em,CategoryRepository $categoryrepository, SupplierRepository $supplierrepository): JsonResponse
     {
      $data= json_decode($request->getContent(), true);
@@ -112,7 +119,9 @@ final class ProductController extends AbstractController
         return $this->json(['message' => 'Product created successfully'], Response::HTTP_CREATED);
     }
 
-    #[Route('/product/{id}', name: 'app_product_update', methods: ['PUT'])]
+    #[Route('/product/modify/{id}', name: 'app_product_update', methods: ['PUT'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function update(Product $product, Request $request, EntityManagerInterface $em,CategoryRepository $categoryrepository,SupplierRepository $supplierrepository): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -146,7 +155,9 @@ final class ProductController extends AbstractController
         return $this->json(['message' => 'Product updated successfully'], Response::HTTP_OK);
     }
 
-    #[Route('/product/{id}', name: 'app_product_delete', methods: ['DELETE'])]
+    #[Route('/product/delete/{id}', name: 'app_product_delete', methods: ['DELETE'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function delete(Product $product, EntityManagerInterface $em): JsonResponse
     {
         $em->remove($product);

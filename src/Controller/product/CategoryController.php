@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class CategoryController extends AbstractController
 {
@@ -22,6 +23,7 @@ final class CategoryController extends AbstractController
     }
 // search category
       #[Route('/category/search/{cname}', name: 'app_category_search', methods: ['GET'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
      public function search(CategoryRepository $repo, string $cname): JsonResponse
  {
 
@@ -43,7 +45,9 @@ final class CategoryController extends AbstractController
      return $this->json($data, Response::HTTP_OK);
      }
 
-        #[Route('/category', name: 'app_category_display', methods: ['GET'])]
+    #[Route('/category/list', name: 'app_category_display', methods: ['GET'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
 public function display(CategoryRepository $repo): JsonResponse
 {
     $categorie=$repo->findAll();
@@ -60,7 +64,9 @@ public function display(CategoryRepository $repo): JsonResponse
     return $this->json($data, Response:: HTTP_OK);
 }
 
-    #[Route('/category', name: 'app_category_create',methods:["POST"])]
+    #[Route('/category/create', name: 'app_category_create',methods:["POST"])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function create(Request $request,EntityManagerInterface $emi, Security $security): JsonResponse
     {
         $user = $security->getUser();
@@ -70,8 +76,6 @@ public function display(CategoryRepository $repo): JsonResponse
         $categorie=new Category();
         $categorie->setCategoryname($data['categoryname']);
         $categorie->setDescription($data['description']);
-
-
        
         $emi->persist($categorie);
         $emi->flush();
@@ -80,7 +84,9 @@ public function display(CategoryRepository $repo): JsonResponse
     return $this->json($categorie, Response::HTTP_CREATED);
     }
 
-        #[Route('/category/{id}', name: 'app_category_update',methods:["PUT"])]
+    #[Route('/category/modify/{id}', name: 'app_category_update',methods:["PUT"])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function update(Category $categorie, Request $request,EntityManagerInterface $emi): JsonResponse
     {
         $data=json_decode($request->getContent(),true);
@@ -95,7 +101,10 @@ public function display(CategoryRepository $repo): JsonResponse
     return $this->json($categorie, Response::HTTP_OK);
 
     }
-            #[Route('/category/{id}', name: 'app_category_delete',methods:["DELETE"])]
+    
+    #[Route('/category/delete/{id}', name: 'app_category_delete',methods:["DELETE"])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+
     public function delete(Category $categorie,EntityManagerInterface $emi): JsonResponse
     {        
         $emi->remove($categorie);
