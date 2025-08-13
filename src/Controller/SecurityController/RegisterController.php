@@ -3,6 +3,7 @@
 namespace App\Controller\SecurityController;
 
 use App\Entity\Security\User;
+use App\Enum\RoleUser;
 use App\Repository\Security\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -50,7 +51,14 @@ final class RegisterController extends AbstractController
         if (isset($data["email"])) $user->setEmail($data["email"]);
 
         
-       
+       if(isset($data["role"])){
+             if (!in_array($data['role'], array_column(RoleUser::cases(), 'value'))) {
+            return new JsonResponse([
+                'error' => 'Invalid role. Allowed roles: ' . implode(', ', array_column(RoleUser::cases(), 'value'))
+            ], Response::HTTP_BAD_REQUEST);}
+      
+         $user->setRole($data["role"]);
+       }
         $user->setRole($data["role"]);
         if (isset($data["password"]))
         $user->setPassword($passwordHasher->hashPassword($user, $data["password"]));
