@@ -100,7 +100,7 @@ final class StockmovementController extends AbstractController
         return $this->json($data, Response::HTTP_CREATED);
     }
 
-#[Route('modify/{id}', name: 'app_stockmovement_update', methods: ['POST'])]
+#[Route('/modify/{id}', name: 'app_stockmovement_update', methods: ['POST'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
 
     public function update(Stockmovement $movement, EntityManagerInterface $em, Request $request, ProductRepository $productrepository): JsonResponse
@@ -127,7 +127,7 @@ final class StockmovementController extends AbstractController
 
 
 
-    #[Route('delete/{id}', name: 'app_stockmovement_delete', methods: ['DELETE'])]
+    #[Route('/delete/{id}', name: 'app_stockmovement_delete', methods: ['DELETE'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
 
     public function delete(Stockmovement $movement, EntityManagerInterface $em, Product $product): JsonResponse

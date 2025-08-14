@@ -15,7 +15,6 @@ class StatisticService
         $this->salerepository = $salerepository;
         $this->productRepository = $productRepository;
     }
-
     public function getSaleStatistic( Request $request){
 
         $data=json_decode($request->getContent(),true);

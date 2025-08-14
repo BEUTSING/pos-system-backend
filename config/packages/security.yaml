@@ -23,10 +23,10 @@ security:
             security: false
 
         login:
-            pattern: ^/api/v1/login
+            pattern: ^/api/v1/user/login
             stateless: true
             json_login:
-                check_path: /api/v1/login
+                check_path: /api/v1/user/login
                 username_path: email
                 password_path: password
                 success_handler: lexik_jwt_authentication.handler.authentication_success
@@ -38,7 +38,7 @@ security:
             jwt: ~
 
     access_control:
-        - { path: ^/api/v1/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/user/login, roles: PUBLIC_ACCESS }
         
         # Routes statistic
         - { path: ^/sale_history, roles: ROLE_TELLER }
