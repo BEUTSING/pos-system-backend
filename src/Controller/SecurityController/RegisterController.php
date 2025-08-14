@@ -16,7 +16,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class RegisterController extends AbstractController
 {
-    #[Route('/register/create', name: 'app_register_create', methods: ['POST'])]
+    #[Route('/user/register', name: 'app_register_create', methods: ['POST'])]
     public function register(Request $request,EntityManagerInterface $em,UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $data=json_decode($request->getContent(), true);
@@ -34,12 +34,12 @@ final class RegisterController extends AbstractController
         return new JsonResponse(['status=> The user has been created successfully'],Response::HTTP_CREATED);
     }
 
-    #[Route('/register/modifier', name:'app_regiter', methods: ['PUT'])]
+    #[Route('/user/modify', name:'app_regiter', methods: ['PUT'])]
 
     public function updateregister(Request $request, EntityManagerInterface $entityManager,UserRepository $userrepo,UserPasswordHasherInterface $passwordHasher): JsonResponse{
         $data=json_decode($request->getContent(), true);
 
-        $user = $entityManager->$userrepo->find($data['id']);
+        $user =$userrepo->find($data['user_id']);
         if (!$user) {
             throw new \Exception("User not found" );
         }
@@ -49,17 +49,20 @@ final class RegisterController extends AbstractController
         if (isset($data["city"])) $user->setCity($data["city"]);
         if (isset($data["color"])) $user->setColor($data["color"]);
         if (isset($data["email"])) $user->setEmail($data["email"]);
-
-        
+     
        if(isset($data["role"])){
-             if (!in_array($data['role'], array_column(RoleUser::cases(), 'value'))) {
-            return new JsonResponse([
-                'error' => 'Invalid role. Allowed roles: ' . implode(', ', array_column(RoleUser::cases(), 'value'))
-            ], Response::HTTP_BAD_REQUEST);}
-      
-         $user->setRole($data["role"]);
+             $allowedRoles = array_column(RoleUser::cases(), 'value');
+
+            foreach ($data["role"] as $r) {
+                if (!in_array($r, $allowedRoles)) {
+                    return new JsonResponse([
+                        'error' => 'Invalid role: ' . $r . '. Allowed roles: ' . implode(', ', $allowedRoles)
+                    ], Response::HTTP_BAD_REQUEST);
+                }
+            }
+
+         $user->setRoles($data["role"]);
        }
-        $user->setRole($data["role"]);
         if (isset($data["password"]))
         $user->setPassword($passwordHasher->hashPassword($user, $data["password"]));
 

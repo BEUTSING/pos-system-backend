@@ -96,29 +96,48 @@ public function getSalesByProduct(Request $request)
 private function formatSalesData(array $sales){
 
     $data = [];
+    $totalsale = 0;
+    $totalpucharse = 0;
+
     foreach($sales as $sale){
 
         $productsInSale = [];
         // Check if the sale has a customer order
         if ($sale->getCustomerOrder()) {
+
             foreach ($sale->getCustomerOrder()->getOrderItems() as $orderItem) {
+                 $salprice = $orderItem->getPrice();
+                $purcharseprice = $orderItem->getProduct()->getPurchasePrice(); 
+                $quantity = $orderItem->getQuantity();
+
+                  // Accumulate for overall totals
+                $totalsale += $salprice * $quantity;
+                $totalpucharse += $purcharseprice * $quantity;
+
                 $productsInSale[] = [
                     'product_name' => $orderItem->getProduct()->getProductname(),
                     'quantity' => $orderItem->getQuantity(),
                     'price' => $orderItem->getPrice(),
                 ];
             }
+            $profil=$totalsale - $totalpucharse;
         }
 
         $data[] = [
+
             'id'=> $sale->getId(),
             'teller'=>$sale->getTeller()->getName(),
             'products'=> $productsInSale,
-            'total_amount'=>$sale->getTotalAmount(),
             'date_created'=>$sale->getCreatedAt()->format('Y-m-d H:i:s'),
             'date_update'=>$sale->getUpdatedAt()->format('Y-m-d H:i:s'),
         ];    
 }
-return $data;
+return [
+             'total_sales' => $totalsale,
+            'total_purchases' => $totalpucharse ,
+            'profil'=> $profil,
+            'sales' => $data
+
+];
 }
 }

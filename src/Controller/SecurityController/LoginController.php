@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class LoginController extends AbstractController
 {
-    #[Route('/login', name: 'app_login', methods: ['POST'])]
+    #[Route('/user/login', name: 'app_login', methods: ['POST'])]
     public function index(Request $request,UserPasswordHasher $passwordHarsher,EntityManagerInterface $entityManager,JWTTokenManagerInterface $JWTManager): 
     JsonResponse{
         $date=json_decode($request->getContent(),true);
