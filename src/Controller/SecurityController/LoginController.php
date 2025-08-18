@@ -11,10 +11,42 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
-
+use OpenApi\Attributes as OA;
 final class LoginController extends AbstractController
 {
+ 
     #[Route('/user/login', name: 'app_login', methods: ['POST'])]
+    #[OA\Post(
+        path: "/api/v1/user/login",
+        summary: "User login",
+        description: "Allows a user to log in with a username and password",
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                type: "object",
+                properties: [
+                    new OA\Property(property: "email", type: "string", example: "user@example.com"),
+                    new OA\Property(property: "password", type: "string", example: "password123")
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: "Login successful",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "token", type: "string", example: "eyJhbGciOiJIUzI1NiI...")
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: "Invalid credentials",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "string", example: "Please check your email and password.")
+                    ]
+                )
+            )
+        ]
+    )]
     public function index(Request $request,UserPasswordHasherInterface $passwordHarsher,EntityManagerInterface $entityManager,JWTTokenManagerInterface $JWTManager): 
     JsonResponse{
         $date=json_decode($request->getContent(),true);
@@ -33,7 +65,16 @@ final class LoginController extends AbstractController
             return new JsonResponse(['token' => $token], Response::HTTP_OK);
     }
 
+
     #[Route('/user/logout', name: 'app_logout', methods: ['POST'])]
+    #[OA\Post(
+        path:"/api/v1/user/logout",
+        summary:"User logout",
+        description:"Allows a user to log out",
+        responses: [
+        new OA\Response(response:200, description:"Logout successful"),
+        ]
+    )]
     public function logout(): JsonResponse
     {
         return new JsonResponse(['message' => 'Logged out successfully'], Response::HTTP_OK);

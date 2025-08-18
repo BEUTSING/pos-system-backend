@@ -41,65 +41,80 @@ class CheckoutService
     }
     
     public function processOrder(Request $request)
-    {
-      $data= json_decode($request->getContent(), true);
-        // Here you can implement the logic to process the order
-        $items= $data['items'];
-        $total = 0;
+{
+    $data = json_decode($request->getContent(), true);
+
+    $user = $this->security->getUser();
+
+    // Vérifier si c'est une nouvelle commande ou une commande existante
+    if (isset($data['customerOrderId'])) {
+        $customerOrder = $this->customerorderrepo->find($data['customerOrderId']);
+        if (!$customerOrder) {
+            throw new \Exception('Customer order not found');
+        }
+    } else {
         $customerOrder = new CustomerOrder();
-        $user=$this->security->getUser();
         $customerOrder->setWaiter($user);
-        foreach ($items as $item){
-            $product = $this->productRepository->find($item['product_id']);
-            if (!$product) {
-                throw new \Exception('Product not found');
-            }
-
-            if($item['quantity'] > $product->getQuantity())
-                throw new \Exception('the quantity in stock is insufficient');
-
-
-            $orderitem = new OrderItem();
-            $orderitem->setProduct($product);
-            $orderitem->setQuantity($item['quantity']);
-            $orderitem->setPrice($product->getSaleprice());
-            $total += $orderitem->getPrice() * $orderitem->getQuantity();
-
-            $this->entityManager->persist($orderitem);
-
-            $customerOrder->addOrderItem($orderitem);
-
-            $product->setQuantity($product->getQuantity()-$orderitem->getQuantity());
-            $this->entityManager->persist(object: $product);
-
-
+        $this->entityManager->persist($customerOrder);
     }
-    
+
+    $items = $data['items'] ?? [];
+    if (empty($items)) {
+        throw new \Exception("No items provided");
+    }
+
+    foreach ($items as $item) {
+        $product = $this->productRepository->find($item['product_id']);
+        if (!$product) {
+            throw new \Exception('Product not found');
+        }
+
+        if ($item['quantity'] > $product->getQuantity()) {
+            throw new \Exception('The quantity in stock is insufficient');
+        }
+
+        $orderItem = new OrderItem();
+        $orderItem->setProduct($product);
+        $orderItem->setQuantity($item['quantity']);
+        $orderItem->setPrice($product->getSaleprice());
+
+        $this->entityManager->persist($orderItem);
+        $customerOrder->addOrderItem($orderItem);
+
+        // Mise à jour du stock
+        $product->setQuantity($product->getQuantity() - $orderItem->getQuantity());
+        $this->entityManager->persist($product);
+    }
+
+    // Sauvegarde en BDD
     $this->entityManager->persist($customerOrder);
     $this->entityManager->flush();
 
-    $data=[
-        "id"=> $customerOrder->getId(),
-        "Waiter_id"=>$customerOrder->getWaiter()->getId(),
-        "total_amount" => $total,
+    // Calcul du total
+    $totalAmount = 0;
+    foreach ($customerOrder->getOrderItems() as $orderItem) {
+        $totalAmount += $orderItem->getPrice() * $orderItem->getQuantity();
+    }
 
-        "Items"=>$customerOrder->getOrderItems()->map(function(OrderItem $orderitem)
-        {
-            return 
-            [
-                "product_id"=>$orderitem->getId(),
-                "Product_name"=>$orderitem->getProduct()->getProductname(),
-                "Quantity"=>$orderitem->getQuantity(),
-                "price"=>$orderitem->getPrice(),
-                "date_create"=>$orderitem->getCreatedAt()->format("Y-m-d H:i:s"),
-                "date_update"=>$orderitem->getUpdatedAt()->format("Y-m-d H:i:s"),
-
+    // Réponse JSON
+    return [
+        "message" => isset($data['customerOrderId']) ? "Items added successfully" : "Order created successfully",
+        "order_id" => $customerOrder->getId(),
+        "waiter_id" => $customerOrder->getWaiter()->getId(),
+        "total_amount" => $totalAmount,
+        "items" => $customerOrder->getOrderItems()->map(function (OrderItem $orderItem) {
+            return [
+                "order_item_id" => $orderItem->getId(),
+                "product_id" => $orderItem->getProduct()->getId(),
+                "product_name" => $orderItem->getProduct()->getProductname(),
+                "quantity" => $orderItem->getQuantity(),
+                "price" => $orderItem->getPrice(),
+                "subtotal" => $orderItem->getPrice() * $orderItem->getQuantity(),
+                "date_create" => $orderItem->getCreatedAt()->format("Y-m-d H:i:s"),
+                "date_update" => $orderItem->getUpdatedAt()->format("Y-m-d H:i:s"),
             ];
-
         })->toArray()
-        
     ];
-    return $data;
 }
 
 public function createSaleFromOrder(Request $request){
@@ -179,62 +194,6 @@ return $data;
 
 }
 
-public function addOrderItemToOrder(Request $request){
-
-    $data= json_decode($request->getContent(), true);
-    $customerOrder=$this->customerorderrepo->find($data['customerOrderId']);
-    if (!$customerOrder) {
-        throw new \Exception('Customer order not found');
-    }
-
-    $product = $this->productRepository->find($data['productId']);
-    if (!$product) {
-        throw new \Exception('Product not found');
-    }
-
-    if($data['quantity'] > $product->getQuantity())
-        throw new \Exception('the quantity in stock is insufficient');
-
-    $neworderitem = new OrderItem();
-    $neworderitem->setProduct($product);
-    $neworderitem->setQuantity($data['quantity']);
-    $neworderitem->setPrice($product->getSaleprice());
-
-    $this->entityManager->persist($neworderitem);
-
-    $customerOrder->addOrderItem($neworderitem);
-
-    $product->setQuantity($product->getQuantity()-$neworderitem->getQuantity());
-    $this->entityManager->persist($product);
-    
-    $this->entityManager->persist($customerOrder);
-    $this->entityManager->flush();
-
-    $totalAmount = 0;
-    foreach ($customerOrder->getOrderItems() as $orderitem) {
-        $totalAmount += $orderitem->getPrice() * $orderitem->getQuantity();
-    }
-
-    return [
-        "message" => "Order item added successfully",
-        "order_id" => $customerOrder->getId(),
-        "total_amount" => $totalAmount,
-        "items" => $customerOrder->getOrderItems()->map(function(OrderItem $orderitem)
-        {
-            return 
-            [
-                "product_id"=>$orderitem->getId(),
-                "Product_name"=>$orderitem->getProduct()->getProductname(),
-                "Quantity"=>$orderitem->getQuantity(),
-                "price"=>$orderitem->getPrice(),
-                "date_create"=>$orderitem->getCreatedAt()->format("Y-m-d H:i:s"),
-                "date_update"=>$orderitem->getUpdatedAt()->format("Y-m-d H:i:s"),
-            ];
-
-        })->toArray()
-        
-    ];
-}
 public function orderItemCancellation(Request $request){
         
     $data= json_decode($request->getContent(), true);
