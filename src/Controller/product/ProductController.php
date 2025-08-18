@@ -17,6 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'Product')]
 final class ProductController extends AbstractController
 {
     private LogEntryService $logEntryService;
@@ -24,7 +25,6 @@ final class ProductController extends AbstractController
     {
         $this->logEntryService = $logEntryService;
     }
-
     #[Route('/product/search/{pname}', name: 'app_product_search', methods: ['GET'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
    #[OA\Get(
@@ -117,6 +117,13 @@ final class ProductController extends AbstractController
                             ]
                         )
                     )
+                ),
+                new OA\Response(
+                    response: 404,
+                    description: "No products found",
+                    content: new OA\JsonContent(
+                        properties: [new OA\Property(property: "Status", type: "string", example: "no products registered")]
+                    )
                 )
             ]
         )]
@@ -174,13 +181,6 @@ final class ProductController extends AbstractController
                 description: "Bad request - missing fields",
                 content: new OA\JsonContent(
                     properties: [new OA\Property(property: "error", type: "string", example: "Missing required fields")]
-                )
-            ),
-            new OA\Response(
-                response: 404,
-                description: "Category not found",
-                content: new OA\JsonContent(
-                    properties: [new OA\Property(property: "error", type: "string", example: "Category not found")]
                 )
             )
         ]

@@ -14,6 +14,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Routing\Attribute\Route;
 
+#[OA\Tag(name: 'Authentication')]
 final class RegisterController extends AbstractController
 {
     #[Route('/user/register', name: 'app_register_create', methods: ['POST'])]

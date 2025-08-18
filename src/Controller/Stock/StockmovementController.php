@@ -15,7 +15,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'stock movement')]
  #[Route('/stock-movement')]
 final class StockmovementController extends AbstractController
 {
@@ -29,6 +31,40 @@ final class StockmovementController extends AbstractController
 
     #[Route('/list', name: 'app_stockmovement_display', methods: ['GET'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
+    #[OA\Get(
+        path: "/api/v1/stock-movement/list",
+        summary: "List all stock movements",
+        description: "Returns a list of all stock movements",
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "List of stock movements",
+                content: new OA\JsonContent(
+                    type: "array",
+                    items: new OA\Items(
+                        type: "object",
+                        properties: [
+                            new OA\Property(property: "id", type: "integer", example: 1),
+                            new OA\Property(property: "product", type: "string", example: "Product Name"),
+                            new OA\Property(property: "quantity", type: "integer", example:1),
+                            new OA\Property(property: "typemovement", type: "string", example: "in"),
+                            new OA\Property(property: "reason", type: "string", example: "Restock"),
+                            new OA\Property(property: "createdAt", type: "string", format: "date-time", example: "2023-10-01T12:00:00Z"),
+                            new OA\Property(property: "updatedAt", type: "string", format: "date-time", example: "2023-10-01T12:00:00Z"),
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: "No stock movements found",
+                content: new OA\JsonContent(        
+                    properties: [new OA\Property(property: "Status", type: "string", example: "no stock movements registered")]
+                )
+            )
+        ]
+                            
+    )]
 
     public function display(StockmovementRepository $repo): JsonResponse
     {
@@ -49,6 +85,47 @@ final class StockmovementController extends AbstractController
    
     #[Route('/create', name: 'app_stockmovement_create', methods: ['POST'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
+    #[OA\Post(
+        path: "/api/v1/stock-movement/create",
+        summary: "Create a new stock movement",
+        description: "Allows creating a new stock movement",
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                type: "object",
+                properties: [
+                    new OA\Property(property: "product", type: "integer", example: 1),
+                    new OA\Property(property:"quantity", type:"integer", example:5),
+                    new OA\Property(property: "typemovement", type: "string", example: "in"),
+                    new OA\Property(property: "reason", type: "string", example: "transfer_in"),
+                ]
+            ),
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description:"stock movement created successfully",
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property:"message", type:"string", example:"supplier created successfully")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: "Bad request - missing fields",
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: "error", type: "string", example: "Missing required fields")]
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: "Product not found",
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: "error", type: "string", example: "Product not found")]
+                )
+            )
+        ]
+    )]
 
     public function create(Stockmovement $movement, EntityManagerInterface $em, Request $request,ProductRepository $productrepository): JsonResponse
     {
@@ -100,9 +177,55 @@ final class StockmovementController extends AbstractController
         return $this->json($data, Response::HTTP_CREATED);
     }
 
-#[Route('/modify/{id}', name: 'app_stockmovement_update', methods: ['POST'])]
+    #[Route('/modify/{id}', name: 'app_stockmovement_update', methods: ['PUT'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
-
+    #[OA\Put(
+    path:"/api/v1/stock-movement/modify/{id}",
+    summary: "Modify an existing movement",
+    parameters: [
+        new OA\Parameter(
+            name: "id",
+            in: "path",
+            required: true,
+            description: "The ID of the movement to modify",
+            schema: new OA\Schema(type: "integer")
+        )
+    ],
+    requestBody: new OA\RequestBody(
+        required: true,
+        content:new OA\JsonContent(
+            properties:[
+                new OA\Property(property: "product", type: "integer", example: 1),
+                new OA\Property(property:"quantity", type:"integer", example:5),
+                new OA\Property(property: "typemovement", type: "string", example: "in"),
+                new OA\Property(property: "reason", type: "string", example: "transfer_in"),
+            ]
+        )
+    ),
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Movement updated successfully",
+            content: new OA\JsonContent(
+                properties: [new OA\Property(property: "message", type: "string", example: "Movement updated successfully")]
+            )
+        ),
+        new OA\Response(
+            response: 400,
+            description: "Invalid data",
+            content: new OA\JsonContent(
+                properties: [new OA\Property(property: "error", type: "string", example: "Invalid movement type")]
+            )
+        ),
+        new OA\Response(
+            response: 404,
+            description: "Product not found",
+            content: new OA\JsonContent(
+                properties: [new OA\Property(property: "error", type: "string", example: "Product not found")]
+            )
+        )
+    ]
+)]
     public function update(Stockmovement $movement, EntityManagerInterface $em, Request $request, ProductRepository $productrepository): JsonResponse
     {
         $data= Json_decode($request->getContent(), true);
@@ -129,7 +252,35 @@ final class StockmovementController extends AbstractController
 
     #[Route('/delete/{id}', name: 'app_stockmovement_delete', methods: ['DELETE'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
-
+    #[OA\Delete(
+        path: "/api/v1/stock-movement/delete/{id}",
+        summary: "Delete a stock movement",
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                required: true,
+                description: "The ID of the movement to delete",
+                schema: new OA\Schema(type: "integer")
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "stock movement deleted successfully",
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: "message", type: "string", example: "stock movement deleted successfully")]
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: "movement not found",
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: "error", type: "string", example: "stock movement not found")]
+                )
+            )
+        ]
+    )]
     public function delete(Stockmovement $movement, EntityManagerInterface $em, Product $product): JsonResponse
     {
         $em->remove($movement);
