@@ -1,9 +1,7 @@
 <?php
 
 namespace App\Controller\Statistic;
-
 use App\Service\Statistic\StatisticService;
-use OpenApi\Annotations\RequestBody;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;

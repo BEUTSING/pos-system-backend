@@ -12,6 +12,7 @@ use App\Repository\Checkout\CustomerOrderRepository;
 use App\Repository\Checkout\OrderItemRepository;
 use App\Repository\Checkout\SaleRepository;
 use App\Repository\Product\ProductRepository;
+use App\Service\LogEntryService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,11 +26,13 @@ class CheckoutService
     private $saleRepo;
     private $orderItemrepo;
     private $cancellationrepo;
+    private LogEntryService $logEntryService;
+
     public function __construct(ProductRepository $productRepository, 
                                 EntityManagerInterface $entityManager,
                                 Security $security,
                                 CustomerOrderRepository $customerorderrepo,CancellationRepository $cancellationrepo,
-                                SaleRepository $sale_repository,OrderItemRepository $orderItemrepo)
+                                SaleRepository $sale_repository,OrderItemRepository $orderItemrepo,LogEntryService $logEntryService)
     {
         $this->productRepository = $productRepository;
         $this->entityManager = $entityManager;
@@ -38,6 +41,7 @@ class CheckoutService
         $this->saleRepo = $sale_repository;
         $this->orderItemrepo=$orderItemrepo;
         $this->cancellationrepo=$cancellationrepo;
+        $this->logEntryService = $logEntryService;
     }
     
     public function processOrder(Request $request)
@@ -124,13 +128,19 @@ public function createSaleFromOrder(Request $request){
     $customerOrder=$this->customerorderrepo->find($data['customerOrderId']);
    
     $saleExists = $this->saleRepo->findOneBy(["customerOrder" => $customerOrder]);
+       $totalAmount=0;
+     foreach($customerOrder->getOrderItems() as $orderitem){
+
+        $totalAmount= $totalAmount+($orderitem->getPrice()*$orderitem->getQuantity());
+     }
+
 
     if($saleExists){
         $data=[
             "sale_id" => $saleExists->getId(),
             "teller" => $saleExists->getTeller()->getName(),
             "order_id" => $customerOrder->getId(),
-            "total_amount" => $saleExists->getTotalAmount(),
+            "total_amount" => $totalAmount,
             "payment_method" => $saleExists->getPaymentMethod(),
             "items" => $customerOrder->getOrderItems()->map(function (OrderItem $item) {
 
@@ -160,12 +170,6 @@ public function createSaleFromOrder(Request $request){
     $sale-> setPaymentMethod($data['paymentMethod']);
     $sale-> setIsPaid(false);
 
-    $totalAmount=0;
-     foreach($customerOrder->getOrderItems() as $orderitem){
-
-        $totalAmount= $totalAmount+($orderitem->getPrice()*$orderitem->getQuantity());
-     }
-     $sale->setTotalAmount($totalAmount);
 
      $this->entityManager->persist($sale);
      $this->entityManager->flush();
@@ -175,7 +179,7 @@ $data=[
             "statut"=>$sale->getStatut(),
             "teller" => $sale->getTeller()->getName(),
             "order_id" => $customerOrder->getId(),
-            "total_amount" => $sale->getTotalAmount(),
+            "total_amount" => $totalAmount,
             "payment_method" => $sale->getPaymentMethod(),
             "items" => $customerOrder->getOrderItems()->map(function (OrderItem $item) {
 

@@ -18,9 +18,6 @@ class Sale
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    private ?string $totalAmount = null;
-
     #[ORM\Column]
     private ?bool $isPaid = null;
 
@@ -45,18 +42,6 @@ class Sale
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getTotalAmount(): ?string
-    {
-        return $this->totalAmount;
-    }
-
-    public function setTotalAmount(string $totalAmount): static
-    {
-        $this->totalAmount = $totalAmount;
-
-        return $this;
     }
 
     public function isPaid(): ?bool

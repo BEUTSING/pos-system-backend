@@ -3,6 +3,7 @@
 namespace App\Entity\Stock;
 
 use App\Entity\Product\Product;
+use App\Entity\Security\User;
 use Doctrine\ORM\Mapping as ORM;
 use App\Entity\Traits\TimestampableTrait;
 use App\Repository\Stock\StockmovementRepository;
@@ -30,6 +31,10 @@ class Stockmovement
 
     #[ORM\Column(length: 255)]
     private ?string $reason = null;
+
+    #[ORM\ManyToOne(inversedBy: 'stockmovements')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $user = null;
 
 
     public function getId(): ?int
@@ -81,6 +86,18 @@ class Stockmovement
     public function setReason(string $reason): static
     {
         $this->reason = $reason;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
 
         return $this;
     }

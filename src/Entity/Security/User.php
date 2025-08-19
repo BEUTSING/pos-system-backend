@@ -5,6 +5,7 @@ namespace App\Entity\Security;
 use App\Entity\Checkout\Cancellation;
 use App\Entity\Checkout\CustomerOrder;
 use App\Entity\Checkout\Sale;
+use App\Entity\Stock\Stockmovement;
 use App\Entity\Traits\ContactTrait;
 use App\Repository\Security\UserRepository as SecurityUserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -62,11 +63,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Cancellation::class, mappedBy: 'user')]
     private Collection $cancellations;
 
+    /**
+     * @var Collection<int, Stockmovement>
+     */
+    #[ORM\OneToMany(targetEntity: Stockmovement::class, mappedBy: 'user')]
+    private Collection $stockmovements;
+
     public function __construct()
     {
         $this->customerOrders = new ArrayCollection();
         $this->sales = new ArrayCollection();
         $this->cancellations = new ArrayCollection();
+        $this->stockmovements = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -246,6 +254,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($cancellation->getUser() === $this) {
                 $cancellation->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Stockmovement>
+     */
+    public function getStockmovements(): Collection
+    {
+        return $this->stockmovements;
+    }
+
+    public function addStockmovement(Stockmovement $stockmovement): static
+    {
+        if (!$this->stockmovements->contains($stockmovement)) {
+            $this->stockmovements->add($stockmovement);
+            $stockmovement->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeStockmovement(Stockmovement $stockmovement): static
+    {
+        if ($this->stockmovements->removeElement($stockmovement)) {
+            // set the owning side to null (unless already changed)
+            if ($stockmovement->getUser() === $this) {
+                $stockmovement->setUser(null);
             }
         }
 

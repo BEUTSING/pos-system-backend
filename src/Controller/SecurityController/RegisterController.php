@@ -50,6 +50,13 @@ final class RegisterController extends AbstractController
                         new OA\Property(property: "error", type: "string", example: "Invalid input data")
                     ]
                 )
+            ),
+             new OA\Response(response: 409, description: "this user already exists",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "string", example: "this user already exists")
+                    ]
+                )
             )
         ]      
     )]
@@ -87,8 +94,7 @@ final class RegisterController extends AbstractController
                     new OA\Property(property: "color", type: "string", example: "red", nullable: true),
                     new OA\Property(property: "email", type: "string", example: "jane.doe@example.com", nullable: true),
                     new OA\Property(property: "password", type: "string", example: "newSecurePassword123", nullable: true),
-                    new OA\Property(
-                        property: "role",
+                    new OA\Property(property: "role",
                         type: "array",
                         nullable: true,
                         items: new OA\Items(type: "string", example: "ROLE_USER"),

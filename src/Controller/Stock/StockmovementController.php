@@ -7,6 +7,7 @@ use App\Entity\Stock\Stockmovement;
 use App\Repository\Product\ProductRepository;
 use App\Repository\Stock\StockmovementRepository;
 use App\Service\LogEntryService;
+use App\Enum\ReasonMovement;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -112,9 +113,9 @@ final class StockmovementController extends AbstractController
             ),
             new OA\Response(
                 response: 400,
-                description: "Bad request - missing fields",
+                description: "Bad request - missing fields or reason invalid",
                 content: new OA\JsonContent(
-                    properties: [new OA\Property(property: "error", type: "string", example: "Missing required fields")]
+                    properties: [new OA\Property(property: "error", type: "string", example: "Missing required fields or reason invalid")]
                 )
             ),
             new OA\Response(
@@ -130,6 +131,8 @@ final class StockmovementController extends AbstractController
     public function create(Stockmovement $movement, EntityManagerInterface $em, Request $request,ProductRepository $productrepository): JsonResponse
     {
         $data= json_decode($request->getContent(), true);
+        $user = $this->security->getUser();
+
 
          $product = $productrepository->find($data['product']);
         if (!$product) {
@@ -137,11 +140,20 @@ final class StockmovementController extends AbstractController
 
         $movement=new Stockmovement();
         $movement->setQuantity($data['quantity']);
+        $movement->setUser($user);
         $movement->setTypemovement($data['typemovement']);
-        $movement->setReason($data['reason']);
-
-
-            if($movement->getTypemovement()=='out'){
+        if(isset($data['reason'])){
+                $allwedReason=array_column(ReasonMovement::cases(), 'value');
+                    if( in_array($data['reason'],$allwedReason)){
+                        $movement->setReason($data['reason']);
+                    }else{
+                        return new JsonResponse([
+                            'error' => 'Invalid reason: ' . $data['reason'] . '. Allowed reasons: ' . implode(', ', $allwedReason)
+                        ], Response::HTTP_BAD_REQUEST);
+                    }
+                
+            }
+        if($movement->getTypemovement()=='out'){
                 
                 if($data['quantity'] > $product->getQuantity()){
                     return $this->json(['error' => 'Insufficient stock for this product'], Response::HTTP_BAD_REQUEST);
@@ -165,11 +177,12 @@ final class StockmovementController extends AbstractController
         $em->flush();
         $data = [
             'id' => $movement->getId(),
+            'user'=>$movement->getUser()->getId(),
             'product' => $movement->getProduct()->getProductname(),
             'quantity' => $movement->getQuantity(),
             'typemovement' => $movement->getTypemovement(),
             'reason' => $movement->getReason(),
-            'old_quantity' => $product->getQuantity() - $movement->getQuantity(),
+            'old_quantity' => $product->getQuantity() + $movement->getQuantity(),
             'new_quantity' => $product->getQuantity(),
         ];
         // Log the creation of the stock movement

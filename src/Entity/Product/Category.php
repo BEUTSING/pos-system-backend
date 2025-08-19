@@ -2,7 +2,6 @@
 
 namespace App\Entity\Product;
 
-use App\Entity\Checkout\Older;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use App\Entity\Traits\TimestampableTrait;
@@ -33,12 +32,6 @@ class Category
 
     #[ORM\Column(type: Types::TEXT)]
     private ?string $description = null;
-
-    /**
-     * @var Collection<int, Older>
-     */
-   
-
     public function __construct()
     {
         $this->products = new ArrayCollection();
