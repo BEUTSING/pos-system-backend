@@ -163,7 +163,8 @@ public function display(CategoryRepository $repo): JsonResponse
                     properties: [
                         new OA\Property(property: "id", type: "integer", example: 1),
                         new OA\Property(property: "categoryname", type: "string", example: "Electronics"),
-                        new OA\Property(property: "description", type: "string", example: "Devices and gadgets")
+                        new OA\Property(property: "description", type: "string", example: "Devices and gadgets"),
+                        new OA\Property(property: "status", type: "string", example: "The category has been created successfully")
                     ]
                 )
             ),

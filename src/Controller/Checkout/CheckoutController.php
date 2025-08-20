@@ -3,7 +3,6 @@
 namespace App\Controller\Checkout;
 
 use App\Service\Checkout\CheckoutService;
-use App\OpenApi\OpenApi;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,7 +28,6 @@ final class CheckoutController extends AbstractController
   #[OA\Post(
     path:"/api/v1/checkout/order",
     summary:"Process an order",
-    security: [["bearerAuth" => []]],
     description:"Allows you to create a new order or add items to an existing order",
     requestBody: new OA\RequestBody(
         required: true,

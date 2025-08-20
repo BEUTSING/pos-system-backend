@@ -182,7 +182,7 @@ final class StockmovementController extends AbstractController
             'quantity' => $movement->getQuantity(),
             'typemovement' => $movement->getTypemovement(),
             'reason' => $movement->getReason(),
-            'old_quantity' => $product->getQuantity() + $movement->getQuantity(),
+            'old_quantity' => $product->getQuantity() - $movement->getQuantity(),
             'new_quantity' => $product->getQuantity(),
         ];
         // Log the creation of the stock movement

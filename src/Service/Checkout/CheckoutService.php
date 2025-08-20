@@ -26,7 +26,7 @@ class CheckoutService
     private $saleRepo;
     private $orderItemrepo;
     private $cancellationrepo;
-    private LogEntryService $logEntryService;
+    private $logEntryService;
 
     public function __construct(ProductRepository $productRepository, 
                                 EntityManagerInterface $entityManager,
@@ -49,7 +49,7 @@ class CheckoutService
     $data = json_decode($request->getContent(), true);
 
     $user = $this->security->getUser();
-
+    $isNewOrder = false;
     // Vérifier si c'est une nouvelle commande ou une commande existante
     if (isset($data['customerOrderId'])) {
         $customerOrder = $this->customerorderrepo->find($data['customerOrderId']);
@@ -60,6 +60,7 @@ class CheckoutService
         $customerOrder = new CustomerOrder();
         $customerOrder->setWaiter($user);
         $this->entityManager->persist($customerOrder);
+        $isNewOrder=true; // Indicate that this is a new order
     }
 
     $items = $data['items'] ?? [];
@@ -99,7 +100,16 @@ class CheckoutService
     foreach ($customerOrder->getOrderItems() as $orderItem) {
         $totalAmount += $orderItem->getPrice() * $orderItem->getQuantity();
     }
-
+//log the order creation or update this order
+    if ($isNewOrder) {
+    $this->logEntryService->createLogEntry(
+        sprintf("New order created (ID %d) by %s", $customerOrder->getId(), $user->getUserIdentifier())
+    );
+} else {
+    $this->logEntryService->createLogEntry(
+        sprintf("Item(s) added to order (ID %d) by user ID %s", $customerOrder->getId(), $user->getUserIdentifier())
+    );
+}
     // Réponse JSON
     return [
         "message" => isset($data['customerOrderId']) ? "Items added successfully" : "Order created successfully",
@@ -119,6 +129,7 @@ class CheckoutService
             ];
         })->toArray()
     ];
+
 }
 
 public function createSaleFromOrder(Request $request){
@@ -174,6 +185,11 @@ public function createSaleFromOrder(Request $request){
      $this->entityManager->persist($sale);
      $this->entityManager->flush();
 
+     //log the sale creation
+     $this->logEntryService->createLogEntry(
+        sprintf("Sale created (ID %d) by user ID %s", $sale->getId(), $user->getUserIdentifier())
+    );  
+
 $data=[
             "sale_id" => $sale->getId(),
             "statut"=>$sale->getStatut(),
@@ -202,6 +218,7 @@ public function orderItemCancellation(Request $request){
         
     $data= json_decode($request->getContent(), true);
     $quantity=$data['quantity']?? null;
+    $user=$this->security->getUser();
 
 
     if($quantity<=0){
@@ -242,6 +259,14 @@ public function orderItemCancellation(Request $request){
         //persit
         $this->entityManager->persist($product);
         $this->entityManager->flush();
+
+        // Log the order item update
+                $this->logEntryService->createLogEntry(
+        sprintf(
+        "Quantity of item '%s' (ID %d) in order ID %d updated from %d to %d by user ID %s",$product->getProductname(),$orderitem->getId(),
+        $customerOrder->getId(),$currentQuantity,$quantity,$user->getUserIdentifier())
+        );
+
         $data[]=[
             'itemid'=> $orderitem->getId(),
             'orderid'=> $customerOrder->getId(),
@@ -268,14 +293,26 @@ public function orderItemCancellation(Request $request){
         $customerOrder->removeOrderItem($orderitem);
         $this->entityManager->remove($orderitem);
         $this->entityManager->persist($product);
+
+        // Log the order item removal
+        $this->logEntryService->createLogEntry(
+            sprintf("OrderItem (ID %d) removed by user ID %s", $orderitem->getId(), $user->getUserIdentifier())
+        );
  }
         $orderIsEmpty = $customerOrder->getOrderItems()->isEmpty();
         if ($orderIsEmpty) {
             $idcustomerorder = $customerOrder->getId();
             $waiterId = $customerOrder->getWaiter()->getId();
             $this->entityManager->remove($customerOrder);
+            //LogEntry for deleted order
+            $this->logEntryService->createLogEntry(
+            sprintf(
+            "Order ID %d deleted because empty, initiated by user ID %",
+            $idcustomerorder,
+            $customerOrder->getWaiter()->getId()));
         }
         $this->entityManager->flush();
+
 
     $data=[
         "id_custormerOrder"=> $idcustomerorder,
@@ -333,6 +370,12 @@ public function cancelSale(Request $request){
         $cancellation->setCancellationReason($reason);
         $this->entityManager->persist($cancellation);
         $this->entityManager->flush();
+    
+        // Log the cancellation
+        $this->logEntryService->createLogEntry(
+            sprintf("Sale (ID %d) cancelled by user ID %s for reason: %s", 
+            $sale->getId(),$user->getUserIdentifier(),$reason)
+        );
        
         $data=[
 

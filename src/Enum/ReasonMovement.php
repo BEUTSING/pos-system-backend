@@ -1,7 +1,7 @@
 <?php
 namespace App\Enum;
 
-enum reasonMovement:string 
+enum ReasonMovement:string 
 {
     case SALE = 'sale';
     case LOSS = 'loss';
