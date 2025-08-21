@@ -107,12 +107,19 @@ final class CheckoutController extends AbstractController
     
 
   public function Order(Request $request): JsonResponse{
+    try {
       $data= $this->checkoutService->processOrder($request);
 
       return new jsonResponse([
         "Succes"=>"true",
         "message"=>$data
       ]);
+    } catch (\Exception $e) {
+        return new JsonResponse([
+          "statut"=> "false",
+            "error" => $e->getMessage()
+        ], 400);
+      }
   }
 
   #[Route('/sale', name:'app_checkout_sale',methods:['POST'] )]
@@ -179,12 +186,19 @@ final class CheckoutController extends AbstractController
     )]
 
   public function sale(Request $request): JsonResponse{
+      try {
       $data= $this->checkoutService->createSaleFromOrder($request);
 
       return new jsonResponse([
         "Succes"=>"true",
         "message"=>$data
       ]);
+    } catch (\Exception $se) {
+        return new JsonResponse([
+          "statut"=> "false",
+            "error" => $se->getMessage()
+        ], 400);
+      }
   }
 
 #[Route('/cancel', name:'cancel',methods:['POST'] )]
@@ -258,13 +272,21 @@ final class CheckoutController extends AbstractController
     ]
 )]
     public function cancel(Request $request): JsonResponse{
+      try {
       $data= $this->checkoutService->orderItemCancellation($request);
 
       return new jsonResponse([
         "Succes"=>"true",
         "message"=>$data
       ]);
-  }
+    } catch (\Exception $e) {
+        return new JsonResponse([
+          "statut"=> "false",
+            "error" => $e->getMessage()
+        ], 400);
+      }
+    }
+  
 
   #[Route('/cancelsale', name:'slcancel',methods:['POST'] )]
   #[IsGranted(attribute: 'ROLE_MANAGER')]
@@ -323,12 +345,19 @@ final class CheckoutController extends AbstractController
   )]
  
   public function cancelSale(Request $request): JsonResponse{
+      try {
       $data= $this->checkoutService->cancelSale($request);
 
       return new jsonResponse([
         "Succes"=>"true",
         "message"=>$data
       ]);
+  }catch(\Exception $e){
+      return new JsonResponse([
+        "statut"=> "false",
+        "error" => $e->getMessage()
+      ], 400);
+    } 
   }
     
 } 

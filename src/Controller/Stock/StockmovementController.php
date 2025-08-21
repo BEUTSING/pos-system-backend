@@ -107,7 +107,17 @@ final class StockmovementController extends AbstractController
                 response: 201,
                 description:"stock movement created successfully",
                 content: new OA\JsonContent(
-                    properties: [new OA\Property(property:"message", type:"string", example:"supplier created successfully")
+                    properties: [
+                        new OA\Property(property: "id", type: "integer", example: 1),
+                        new OA\Property(property: "user", type: "integer", example: 1),
+                        new OA\Property(property: "product", type: "integer", example: 1),
+                        new OA\Property(property: "quantity", type: "integer", example: 5),
+                        new OA\Property(property: "typemovement", type: "string", example: "in"),
+                        new OA\Property(property: "reason", type: "string", example: "transfer_in"),
+                        new OA\Property(property: "old_quantity", type: "integer", example: 100),
+                        new OA\Property(property: "new_quantity", type: "integer", example: 105), 
+                        new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z"),
+                        new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z")
                     ]
                 )
             ),
@@ -184,6 +194,7 @@ final class StockmovementController extends AbstractController
             'reason' => $movement->getReason(),
             'old_quantity' => $product->getQuantity() - $movement->getQuantity(),
             'new_quantity' => $product->getQuantity(),
+            
         ];
         // Log the creation of the stock movement
         $this->logEntryService->createLogEntry('Stock movement created for product: ' . $product->getProductname() . ' with quantity: ' . $movement->getQuantity().' and of type ' .$movement->getTypemovement());
@@ -220,7 +231,18 @@ final class StockmovementController extends AbstractController
             response: 200,
             description: "Movement updated successfully",
             content: new OA\JsonContent(
-                properties: [new OA\Property(property: "message", type: "string", example: "Movement updated successfully")]
+                properties: [
+                    new OA\Property(property: "id", type: "integer", example: 1),
+                    new OA\Property(property: "product", type: "integer", example: 2),
+                    new OA\Property(property: "quantity", type: "integer", example: 5),
+                    new OA\Property(property: "typemovement", type: "string", example: "in"),
+                    new OA\Property(property: "reason", type: "string", example: "transfer_in"),
+                    new OA\Property(property: "old_quantity", type: "integer", example: 100),
+                    new OA\Property(property: "new_quantity", type: "integer", example: 105),
+                    new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z"),
+                    new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z")
+
+                ]
             )
         ),
         new OA\Response(
@@ -250,9 +272,20 @@ final class StockmovementController extends AbstractController
             }
             $movement->setProduct($product);
         }
+        if(isset($data['reason'])){
+                $allwedReason=array_column(ReasonMovement::cases(), 'value');
+                    if( in_array($data['reason'],$allwedReason)){
+                        $reason=$data['reason'];
+                    }else{
+                        return new JsonResponse([
+                            'error' => 'Invalid reason: ' . $data['reason'] . '. Allowed reasons: ' . implode(', ', $allwedReason)
+                        ], Response::HTTP_BAD_REQUEST);
+                    }
+                
+            }
         $movement->setQuantity($data['quantity']??$movement->getQuantity());
         $movement->setTypemovement($data['typemovement']?? $movement->getTypemovement());
-        $movement->setReason($data['reason']?? $movement->getReason());
+        $movement->setReason($reason?? $movement->getReason());
 
         $em->flush();
 

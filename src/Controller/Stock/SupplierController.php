@@ -48,6 +48,13 @@ final class SupplierController extends AbstractController
                         ]
                     )
                 )
+            ),
+            new OA\Response(
+                response: 404,
+                description: "No suppliers found",
+                content: new OA\JsonContent(
+                    properties: [new OA\Property(property: "error", type: "string", example: "No suppliers found")]
+                )
             )
         ]
     )]
@@ -85,6 +92,8 @@ final class SupplierController extends AbstractController
                             new OA\Property(property: "email", type: "string", example: "supplierA@email.com"),
                             new OA\Property(property: "city", type: "string", example: "Paris"),
                             new OA\Property(property: "phone", type: "string", example: "+33123456789"),
+                            new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z"),
+                            new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z") 
                         ]
                     )
                 )
@@ -140,7 +149,15 @@ final class SupplierController extends AbstractController
                 response: 201,
                 description: "Supplier created successfully",
                 content: new OA\JsonContent(
-                    properties: [new OA\Property(property: "message", type: "string", example: "Supplier created successfully")]
+                    properties: [
+                        new OA\Property(property: "id", type: "integer", example: 1),
+                        new OA\Property(property: "name", type: "string", example: "Supplier A"),
+                        new OA\Property(property: "email", type: "string", example: "supplierA@email.com"),
+                        new OA\Property(property: "city", type: "string", example: "Paris"),
+                        new OA\Property(property: "phone", type: "string", example: "+33123456789"),
+                        new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z"),
+                        new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z") 
+                    ]
                 )
             ),
             new OA\Response(
@@ -191,7 +208,7 @@ final class SupplierController extends AbstractController
                     new OA\Property(property: "name", type: "string", example: "Updated Supplier"),
                     new OA\Property(property: "email", type: "string", example: "updated@email.com"),
                     new OA\Property(property: "city", type: "string", example: "Lyon"),
-                    new OA\Property(property: "phone", type: "string", example: "+33498765432"),
+                    new OA\Property(property: "phone", type: "string", example: "+33498765432")
                 ]
             )
         ),
@@ -200,7 +217,15 @@ final class SupplierController extends AbstractController
                 response: 200,
                 description: "Supplier updated successfully",
                 content: new OA\JsonContent(
-                    properties: [new OA\Property(property: "message", type: "string", example: "Supplier updated successfully")]
+                    properties: [
+                        new OA\Property(property: "id", type: "integer", example: 1),
+                        new OA\Property(property: "name", type: "string", example: "Updated Supplier"),
+                        new OA\Property(property: "email", type: "string", example: "updated@email.com"),
+                        new OA\Property(property: "city", type: "string", example: "Lyon"),
+                        new OA\Property(property: "phone", type: "string", example: "+33498765432"),
+                        new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z"),
+                        new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z")                    ]
+
                 )
             ),
             new OA\Response(

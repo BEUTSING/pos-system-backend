@@ -113,7 +113,9 @@ final class ProductController extends AbstractController
                                 new OA\Property(property: "saleprice", type: "number", format: "float"),
                                 new OA\Property(property: "purchaseprice", type: "number", format: "float"),
                                 new OA\Property(property: "quantity", type: "integer"),
-                                new OA\Property(property: "minimumstock", type: "integer")
+                                new OA\Property(property: "minimumstock", type: "integer"),
+                                new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z"),
+                                new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z")
                             ]
                         )
                     )
@@ -173,7 +175,19 @@ final class ProductController extends AbstractController
                 response: 201,
                 description: "Product created successfully",
                 content: new OA\JsonContent(
-                    properties: [new OA\Property(property: "message", type: "string", example: "Product created successfully")]
+                    properties: [
+                        new OA\Property(property: "id", type: "integer", example: 1),
+                        new OA\Property(property: "productname", type: "string",example:"product name"),
+                        new OA\Property(property: "category", type: "string", nullable: true, example:"Electronics"),
+                        new OA\Property(property: "supplier", type: "string", nullable: true, example: "Supplier Name"),
+                        new OA\Property(property: "saleprice", type: "number", format: "float", example:1000),
+                        new OA\Property(property: "purchaseprice", type: "number", format: "float", example:2000),
+                        new OA\Property(property: "quantity", type: "integer", example: 50),
+                        new OA\Property(property: "minimumstock", type: "integer", example: 5),
+                        new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z"),
+                        new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z")
+                            
+                    ]
                 )
             ),
             new OA\Response(
@@ -262,7 +276,16 @@ final class ProductController extends AbstractController
                 response: 200,
                 description: "Product updated successfully",
                 content: new OA\JsonContent(
-                    properties: [new OA\Property(property: "message", type: "string", example: "Product updated successfully")]
+                    properties: [
+                        new OA\Property(property: "productname", type: "string", nullable: true, example: "Updated Product Name"),
+                        new OA\Property(property: "category", type: "integer", nullable: true, description: "Category ID"),
+                        new OA\Property(property: "supplier", type: "integer", nullable: true, description: "Supplier ID"),
+                        new OA\Property(property: "saleprice", type: "number", format: "float", nullable: true, example: 25.50),
+                        new OA\Property(property: "purchaseprice", type: "number", format: "float", nullable: true, example: 15.00),
+                        new OA\Property(property: "quantity", type: "integer", nullable: true, example: 150),
+                        new OA\Property(property: "minimumstock", type: "integer", nullable: true, example: 20),
+                        new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z"),
+                        new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z")                        ]
                 )
             ),
             new OA\Response(

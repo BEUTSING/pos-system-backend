@@ -1,1 +1,26 @@
 {% extends '@NelmioApiDoc/SwaggerUi/index.html.twig'%}
+
+{% block title %}POS{% endblock %}
+
+{% block swagger_ui %}
+    <script>
+        window.onload = function() {
+            // Initialize the Swagger UI
+            const ui = SwaggerUIBundle({
+                url: "{{ swagger_url }}",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout"
+            });
+
+            window.ui = ui;
+        };
+    </script>
+{% endblock %}

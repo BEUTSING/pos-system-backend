@@ -218,12 +218,11 @@ public function orderItemCancellation(Request $request){
         
     $data= json_decode($request->getContent(), true);
     $quantity=$data['quantity']?? null;
+    if ($quantity !== null && $quantity <= 0) {
+        throw new \Exception('Quantity must be greater than zero');
+    }
     $user=$this->security->getUser();
 
-
-    if($quantity<=0){
-        throw new \Exception("Quantity must be greater than zero");
-    }
     $orderitem=$this->orderItemrepo->find($data['orderItemId']);
     if (!$orderitem) {
     throw new \Exception('The order item was not found.');
@@ -233,7 +232,7 @@ public function orderItemCancellation(Request $request){
     $customerOrder = $orderitem->getCustomerOrder();
 
 
-    if($quantity){
+    if($quantity !== null && $quantity > 0){
 
     $currentQuantity=$orderitem->getQuantity();
 
@@ -299,10 +298,15 @@ public function orderItemCancellation(Request $request){
             sprintf("OrderItem (ID %d) removed by user ID %s", $orderitem->getId(), $user->getUserIdentifier())
         );
  }
+        $idcustomerorder=null;
+        $waiterId=null;
+        // Check if the order is empty after removing the item
+        // If it is, remove the order and log the deletion
         $orderIsEmpty = $customerOrder->getOrderItems()->isEmpty();
         if ($orderIsEmpty) {
             $idcustomerorder = $customerOrder->getId();
             $waiterId = $customerOrder->getWaiter()->getId();
+
             $this->entityManager->remove($customerOrder);
             //LogEntry for deleted order
             $this->logEntryService->createLogEntry(

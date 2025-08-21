@@ -50,7 +50,9 @@ final class CategoryController extends AbstractController
                         properties: [
                             new OA\Property(property: "id", type: "integer", example: 1),
                             new OA\Property(property: "categoryname", type: "string", example: "Electronics"),
-                            new OA\Property(property: "description", type: "string", example: "Devices and gadgets")
+                            new OA\Property(property: "description", type: "string", example: "Devices and gadgets"),
+                            new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z"),
+                            new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z")
                         ]
 
                     )
@@ -106,7 +108,9 @@ final class CategoryController extends AbstractController
                         properties: [
                             new OA\Property(property: "id", type: "integer", example: 1),
                             new OA\Property(property: "categoryname", type: "string", example: "Electronics"),
-                            new OA\Property(property: "description", type: "string", example: "Devices and gadgets")
+                            new OA\Property(property: "description", type: "string", example: "Devices and gadgets"),
+                            new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z"),
+                            new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z")
                         ]
                     )
                 )
@@ -164,7 +168,9 @@ public function display(CategoryRepository $repo): JsonResponse
                         new OA\Property(property: "id", type: "integer", example: 1),
                         new OA\Property(property: "categoryname", type: "string", example: "Electronics"),
                         new OA\Property(property: "description", type: "string", example: "Devices and gadgets"),
-                        new OA\Property(property: "status", type: "string", example: "The category has been created successfully")
+                        new OA\Property(property: "status", type: "string", example: "The category has been created successfully"),
+                        new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z"),
+                        new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z")
                     ]
                 )
             ),
@@ -217,10 +223,45 @@ public function display(CategoryRepository $repo): JsonResponse
                     type: "object",
                     properties: [
                         new OA\Property(property: "categoryname", type: "string", example: "Updated Category Name"),
-                        new OA\Property(property: "description", type: "string", example: "Updated description")
+                        new OA\Property(property: "description", type: "string", example: "Updated description"),
                     ]
                 )
-            )
+            ),
+            responses: [
+                new OA\Response(   
+                    response: 200,
+                    description: "Category updated successfully",
+                    content: new OA\JsonContent(
+                        type: "object",
+                        properties: [
+                            new OA\Property(property: "id", type: "integer", example: 1),
+                            new OA\Property(property: "categoryname", type: "string", example: "Electronics"),
+                            new OA\Property(property: "description", type: "string", example: "Devices and gadgets"),
+                            new OA\Property(property: "status", type: "string", example: "Category updated successfully"),
+                            new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z"),
+                            new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z")
+                        ]
+                    )
+                ),
+                new OA\Response(
+                    response: 404,
+                    description: "Category not found",
+                    content: new OA\JsonContent(
+                        properties: [
+                            new OA\Property(property: "error", type: "string", example: "Category not found")
+                        ]
+                    )
+                ),
+                new OA\Response(
+                    response: 400,
+                    description: "Bad request - invalid data",
+                    content: new OA\JsonContent(
+                        properties: [
+                            new OA\Property(property: "error", type: "string", example: "Invalid input data")
+                        ]
+                    )
+                )
+            ]
     )]
 
     public function update(Category $categorie, Request $request,EntityManagerInterface $emi): JsonResponse
