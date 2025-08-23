@@ -17,8 +17,8 @@ nelmio_api_doc:
             - name: Authentication
             - name: Product
             - name: Category
-            - name: Checkout
             - name: Supplier
+            - name: Checkout
             - name: StockMovement
             - name: Statistics
     areas: # to filter documented areas

@@ -12,6 +12,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
+
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 
@@ -24,6 +25,7 @@ class Product
     private ?int $id = null;
 
     #[ORM\Column(length: 255, unique: true)]
+
     private ?string $productname = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]

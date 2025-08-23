@@ -15,6 +15,5 @@ enum ReasonMovement:string
     case RETURN_CUSTOMER = 'return_customer';
     case TRANSFER_IN = 'transfer_in';
     case PRODUCTION_IN = 'production_in';
-
 }
 

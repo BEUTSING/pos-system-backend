@@ -27,8 +27,8 @@ final class RegisterController extends AbstractController
             content: new OA\JsonContent(
                 type: "object",
                 properties: [
-                    new OA\Property(property: "name", type: "string", example: "John Doe"),
-                    new OA\Property(property: "phone", type: "string", example: "+1234567890"),
+                    new OA\Property(property: "name", type: "string", example: "Beutsing Jeane"),
+                    new OA\Property(property: "phone", type: "string", example: "+237 692170034"),
                     new OA\Property(property: "city", type: "string", example: "New York"),
                     new OA\Property(property: "color", type: "string", example: "blue"),
                     new OA\Property(property: "email", type: "string", example: "exemple@gmail.com"),
@@ -64,6 +64,7 @@ final class RegisterController extends AbstractController
     {
         $data=json_decode($request->getContent(), true);
         
+        
         $user=new User();
         $user->setName($data['name']);
         $user->setPhone($data['phone']);
@@ -88,8 +89,8 @@ final class RegisterController extends AbstractController
                 type: "object",
                 properties: [
                     new OA\Property(property: "user_id", type: "integer", example: 1),
-                    new OA\Property(property: "name", type: "string", example: "Jane Doe", nullable: true),
-                    new OA\Property(property: "phone", type: "string", example: "+0987654321", nullable: true),
+                    new OA\Property(property: "name", type: "string", example: "Beutsing Jeanne", nullable: true),
+                    new OA\Property(property: "phone", type: "string", example: "+237 692170034", nullable: true),
                     new OA\Property(property: "city", type: "string", example: "Los Angeles", nullable: true),
                     new OA\Property(property: "color", type: "string", example: "red", nullable: true),
                     new OA\Property(property: "email", type: "string", example: "jane.doe@example.com", nullable: true),
