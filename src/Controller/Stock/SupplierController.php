@@ -173,7 +173,12 @@ final class SupplierController extends AbstractController
     public function create(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-
+     $required=['name','email','city','phone'];
+        foreach($required as $field){
+            if(empty($data[$field]) || !isset($data[$field])){
+                return $this->json(['error'=>"The field $field is required"],Response::HTTP_BAD_REQUEST);
+            }
+        }
         $supplier = new Supplier();
         $supplier->setName($data['name']);
         $supplier->setEmail($data['email']);
@@ -240,6 +245,13 @@ final class SupplierController extends AbstractController
     public function update(Supplier $supplier, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
+
+        $required=['name','email','city','phone'];
+        foreach($required as $field){
+            if(empty($data[$field]) || !isset($data[$field])){
+                return $this->json(['e rror'=>"The field $field is required"],Response::HTTP_BAD_REQUEST);
+            }
+        }
 
         $supplier->setName($data['name'] ?? $supplier->getName());
         $supplier->setEmail($data['email'] ?? $supplier->getEmail());

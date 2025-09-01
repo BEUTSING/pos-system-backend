@@ -60,11 +60,24 @@ final class RegisterController extends AbstractController
             )
         ]      
     )]
-    public function register(Request $request,EntityManagerInterface $em,UserPasswordHasherInterface $passwordHasher): JsonResponse
+    public function register(Request $request,EntityManagerInterface $em,UserPasswordHasherInterface $passwordHasher,UserRepository $userrepo): JsonResponse
     {
         $data=json_decode($request->getContent(), true);
         
-        
+         $required =['name','phone','city','color','email'];
+         foreach($required as $field){
+            if(empty($data[$field])){
+                return new JsonResponse(['error'=>'The field '.$field.' is required'],Response::HTTP_BAD_REQUEST);
+            }
+         }
+            if(!filter_var($data['email'],FILTER_VALIDATE_EMAIL)){
+                return new JsonResponse(['error'=>'The email is not valid'],Response::HTTP_BAD_REQUEST);
+            }
+            $userexists=$userrepo->findOneBy(['email'=>$data['email']]);
+            if($userexists){
+                return new JsonResponse(['error'=>'this user already exists'],Response::HTTP_CONFLICT);
+            }
+
         $user=new User();
         $user->setName($data['name']);
         $user->setPhone($data['phone']);
@@ -134,9 +147,19 @@ final class RegisterController extends AbstractController
 
         $user =$userrepo->find($data['user_id']);
         if (!$user) {
-            throw new \Exception("User not found" );
+
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
         }
 
+         $required =['name','phone','city','color','email'];
+         foreach($required as $field){
+            if(empty($data[$field])){
+                return new JsonResponse(['error'=>'The field '.$field.' is required'],Response::HTTP_BAD_REQUEST);
+            }      }  
+
+             if(!filter_var($data['email'],FILTER_VALIDATE_EMAIL)){
+                return new JsonResponse(['error'=>'The email is not valid'],Response::HTTP_BAD_REQUEST);
+            }
         if (isset($data["name"])) $user->setName($data["name"]);
         if (isset($data["phone"])) $user->setPhone($data["phone"]);
         if (isset($data["city"])) $user->setCity($data["city"]);

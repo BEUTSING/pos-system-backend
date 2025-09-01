@@ -141,6 +141,13 @@ final class StockmovementController extends AbstractController
     public function create(Stockmovement $movement, EntityManagerInterface $em, Request $request,ProductRepository $productrepository): JsonResponse
     {
         $data= json_decode($request->getContent(), true);
+
+        $required=['product','quantity','typemovement','reason'];
+        foreach($required as $field){
+            if(empty($data[$field]) || !isset($data[$field])){
+                return $this->json(['error'=>"The field $field is required"],Response::HTTP_BAD_REQUEST);
+            }
+        }
         $user = $this->security->getUser();
 
 

@@ -203,9 +203,11 @@ final class ProductController extends AbstractController
     {
      $data= json_decode($request->getContent(), true);
 
-     if(!isset($data['productname']) || !isset($data['category']) || !isset($data['saleprice']) || !isset($data['purchaseprice']) || !isset($data['quantity']) || !isset($data['minimumstock'])) {
-            return $this->json(['error' => 'Missing required fields'], Response::HTTP_BAD_REQUEST);
-        }
+    $required=['productname','category','saleprice','purchaseprice','quantity','minimumstock'];
+    foreach($required as $field){
+        if(empty($data[$field]) || !isset($data[$field])){
+            return $this->json(['error'=>"The field $field is required"],Response::HTTP_BAD_REQUEST);
+        }}
 
         $category = $categoryrepository->find($data['category']);
         if(!$category){
@@ -301,6 +303,12 @@ final class ProductController extends AbstractController
     public function update(Product $product, Request $request, EntityManagerInterface $em,CategoryRepository $categoryrepository,SupplierRepository $supplierrepository): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
+
+        $required=['productname','category','saleprice','purchaseprice','quantity','minimumstock'];
+            foreach($required as $field){
+            if(empty($data[$field]) || !isset($data[$field])){
+                return $this->json(['error'=>"The field $field is required"],Response::HTTP_BAD_REQUEST);
+        }}
 
         if(isset($data['category'])){
             $category = $categoryrepository->find($data['category']);

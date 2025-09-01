@@ -190,6 +190,12 @@ public function display(CategoryRepository $repo): JsonResponse
         $user = $security->getUser();
 
         $data=json_decode($request->getContent(),true);
+        $required=['categoryname','description'];
+        foreach($required as $field){
+            if(empty($data[$field]) || !isset($data[$field])){
+                return $this->json(['error'=>"The field $field is required"],Response::HTTP_BAD_REQUEST);
+            }
+        }
          
         $categorie=new Category();
         $categorie->setCategoryname($data['categoryname']);
