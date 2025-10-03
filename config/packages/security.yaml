@@ -54,7 +54,8 @@ security:
         - { path: ^/stock_movement,  roles: ROLE_MANAGER }                
         
         # Routes user
-        - { path: ^/register,  roles: ROLE_ADMIN}
+        - { path: ^/user/register,  roles: ROLE_ADMIN}
+        - { path:  ^/user/modify,  roles: ROLE_ADMIN}
         
         # Routes category
         - { path: ^/category,  roles: ROLE_MANAGER}

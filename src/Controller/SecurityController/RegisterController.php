@@ -151,7 +151,7 @@ final class RegisterController extends AbstractController
             return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
         }
 
-         $required =['name','phone','city','color','email'];
+         $required =['name','phone','city','color','role','email'];
          foreach($required as $field){
             if(empty($data[$field])){
                 return new JsonResponse(['error'=>'The field '.$field.' is required'],Response::HTTP_BAD_REQUEST);
@@ -160,11 +160,11 @@ final class RegisterController extends AbstractController
              if(!filter_var($data['email'],FILTER_VALIDATE_EMAIL)){
                 return new JsonResponse(['error'=>'The email is not valid'],Response::HTTP_BAD_REQUEST);
             }
-        if (isset($data["name"])) $user->setName($data["name"]);
-        if (isset($data["phone"])) $user->setPhone($data["phone"]);
-        if (isset($data["city"])) $user->setCity($data["city"]);
-        if (isset($data["color"])) $user->setColor($data["color"]);
-        if (isset($data["email"])) $user->setEmail($data["email"]);
+         $user->setName($data["name"]);
+        $user->setPhone($data["phone"]);
+         $user->setCity($data["city"]);
+        $user->setColor($data["color"]);
+         $user->setEmail($data["email"]);
      
        if(isset($data["role"])){
              $allowedRoles = array_column(RoleUser::cases(), 'value');
@@ -179,9 +179,6 @@ final class RegisterController extends AbstractController
 
          $user->setRoles($data["role"]);
        }
-        if (isset($data["password"]))
-        $user->setPassword($passwordHasher->hashPassword($user, $data["password"]));
-
         $entityManager->flush();
         return new JsonResponse(['status' => 'User updated successfully'], Response::HTTP_OK);
 
