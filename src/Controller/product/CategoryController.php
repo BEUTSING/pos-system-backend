@@ -85,6 +85,8 @@ final class CategoryController extends AbstractController
                 'id' => $category->getId(),
                 'categoryname' => $category->getCategoryname(),
                 'description' => $category->getDescription(),
+                'date_createAt'=>$category->getDateCreateAt(),
+                'date_updateAt'=>$category->getDateUpdateAt()
             ];
         }
         // Return the data as JSON response
@@ -135,6 +137,8 @@ public function display(CategoryRepository $repo): JsonResponse
             'id' => $category->getId(),
             'categoryname' => $category->getCategoryname(),
             'description' => $category->getDescription(),
+            'date_createAt'=>$category->getDateCreateAt(),
+            'date_updateAt'=>$category->getDateUpdateAt()
         ];
     }
     // Return the data as JSON response 
