@@ -137,8 +137,8 @@ public function display(CategoryRepository $repo): JsonResponse
             'id' => $category->getId(),
             'categoryname' => $category->getCategoryname(),
             'description' => $category->getDescription(),
-            'date_createAt'=>$category->getDateCreateAt(),
-            'date_updateAt'=>$category->getDateUpdateAt()
+            'date_createAt'=>$category->getCreatedAt(),
+            'date_updateAt'=>$category->getUpdatedAt()
         ];
     }
     // Return the data as JSON response 

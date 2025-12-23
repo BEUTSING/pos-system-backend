@@ -27,12 +27,12 @@ final class RegisterController extends AbstractController
             content: new OA\JsonContent(
                 type: "object",
                 properties: [
-                    new OA\Property(property: "name", type: "string", example: "Beutsing Jeane"),
-                    new OA\Property(property: "phone", type: "string", example: "+237 692170034"),
+                    new OA\Property(property: "name", type: "string", example: "Beutsing jeanne"),
+                    new OA\Property(property: "phone", type: "string", example: "+237 682341110"),
                     new OA\Property(property: "city", type: "string", example: "New York"),
                     new OA\Property(property: "color", type: "string", example: "blue"),
-                    new OA\Property(property: "email", type: "string", example: "exemple@gmail.com"),
-                    new OA\Property(property: "password", type: "string", example: "password123")
+                    new OA\Property(property: "email", type: "string", example: "beutsing@gmail.com"),
+                    new OA\Property(property: "password", type: "string", example: "bk123")
                 ]
             )
         ),
