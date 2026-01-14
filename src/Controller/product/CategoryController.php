@@ -208,7 +208,7 @@ public function display(CategoryRepository $repo): JsonResponse
         $emi->persist($categorie);
         $emi->flush();
         // Log the creation of the category
-        $this->logEntryService->createLogEntry('Category created: ' . $categorie->getCategoryname());
+        $this->logEntryService->createLogEntry('Category created: ' . $categorie->getCategoryname(). 'by'.$user->ge);
     return $this->json($categorie, Response::HTTP_CREATED);
     }
 

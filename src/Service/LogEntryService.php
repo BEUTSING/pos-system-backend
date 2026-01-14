@@ -39,13 +39,13 @@ class LogEntryService
             $data[] = [
                 'id' => $logEntry->getId(),
                 'message' => $logEntry->getMessage(),
-                'user' => $logEntry->getUser()->getUser()->getId(),
+                'user' => $logEntry->getUser()->getId(),
                 'createdAt' => $logEntry->getCreatedAt()->format('Y-m-d H:i:s'),
             ]; 
         }
     return $data;
     }
     
-
+  
 
 }
