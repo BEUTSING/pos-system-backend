@@ -10,6 +10,7 @@ use App\Service\LogEntryService;
 use App\Service\Security\RegisterService;
 use Doctrine\ORM\EntityManagerInterface;
 use FontLib\Table\Type\name;
+use OpenApi\Annotations\Items;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -103,6 +104,33 @@ final class RegisterController extends AbstractController
     }
 
     #[Route('/user/list', name:'app_list', methods: ['GET'])]
+    #[OA\Get(
+        path: '/api/v1/user/list',
+        summary: "List all users",
+        description: "Retrieves a list of all registered users with their details.",
+        responses:[
+            new OA\Response(
+                response:200,
+                description:" list of users",
+                content: new  OA\JsonContent(
+                    type: "array",
+                    items: new OA\Items(
+                        type: "object",
+                        properties: [
+                            new OA\Property(property: "id", type: "integer", example: 1),
+                            new OA\Property(property: "name", type: "string", example: "Beutsing Jeanne"),
+                            new OA\Property(property: "phone", type: "string", example: "+237 692170034"),
+                            new OA\Property(property: "city", type: "string", example: "Los Angeles"),
+                            new OA\Property(property: "color", type: "string", example: "red"),
+                            new OA\Property(property: "email", type: "string", example: "jeanne@gmail.com"),
+                            new OA\Property(property: "roles", type: "array",
+                                items: new OA\Items(type: "string", example: "ROLE_USER")
+                            )]
+                    )
+                )
+            )
+        ]
+    )]
     public function list():JsonResponse{
         $data= $this->registerService->listUsers();
 
@@ -119,12 +147,12 @@ final class RegisterController extends AbstractController
             content: new OA\JsonContent(
                 type: "object",
                 properties: [
-                    new OA\Property(property: "user_id", type: "integer", example: 1),
-                    new OA\Property(property: "name", type: "string", example: "Beutsing Jeanne", nullable: true),
+                     new OA\Property(property: "name", type: "string", example: "Beutsing Jeanne", nullable: true),
                     new OA\Property(property: "phone", type: "string", example: "+237 692170034", nullable: true),
                     new OA\Property(property: "city", type: "string", example: "Los Angeles", nullable: true),
                     new OA\Property(property: "color", type: "string", example: "red", nullable: true),
                     new OA\Property(property: "email", type: "string", example: "jeanne.doe@example.com", nullable: true),
+                    new OA\Property(property: "password", type: "string", example: "admin123", nullable: true),
                      new OA\Property(property: "role",
                         type: "array",
                         nullable: true,
@@ -178,7 +206,37 @@ final class RegisterController extends AbstractController
 
     }
 
-     #[Route('/user/delete/{id}', name:'app_regiter', methods: ['DELETE'])]
+     #[Route('/user/delete/{id}', name:'app_regiter_delete', methods: ['DELETE'])]
+     #[OA\Delete(
+        path:'/api/v1/user/delete/{id}',
+        summary:'Delete user by ID',
+        description:'Allows delete a user b ID',
+        parameters:[
+            new OA\Parameter(
+                name: 'id',
+                in:'path',
+                required: true,
+                description:'ID of user to delete',
+                schema: new OA\Schema(type: 'integer')
+            )
+        ],
+        responses:[
+            new OA\Response(
+                response: 204,
+                description: 'User deleted successfully'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'User not found',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'error', type: 'string', example: 'User not found')
+                    ]
+                )
+            )
+        ]
+        
+     )]
      public function deleteUser(int $id): JsonResponse{
        try{
             $data=$this->registerService->deleteusers($id);

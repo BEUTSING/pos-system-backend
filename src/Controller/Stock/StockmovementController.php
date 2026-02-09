@@ -67,9 +67,12 @@ final class StockmovementController extends AbstractController
                             
     )]
 
-    public function display(StockmovementRepository $repo): JsonResponse
+    public function list(StockmovementRepository $repo): JsonResponse
     {
         $stockMovements = $repo->findAll();
+        if (!$stockMovements) {
+            return $this->json(['Status' => 'No stock movements found'], Response::HTTP_NOT_FOUND);
+        }
         $data = [];
         foreach ($stockMovements as $movement) {
             $data[] = [

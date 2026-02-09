@@ -49,7 +49,7 @@ final class LoginController extends AbstractController
             )
         ]
     )]
-    public function index(Request $request,UserPasswordHasherInterface $passwordHarsher,EntityManagerInterface $entityManager,JWTTokenManagerInterface $JWTManager): 
+    public function login(Request $request,UserPasswordHasherInterface $passwordHarsher,EntityManagerInterface $entityManager,JWTTokenManagerInterface $JWTManager): 
     JsonResponse{
         $date=json_decode($request->getContent(),true);
 

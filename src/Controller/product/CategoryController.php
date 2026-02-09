@@ -131,6 +131,9 @@ final class CategoryController extends AbstractController
 public function display(CategoryRepository $repo): JsonResponse
 {
     $categorie=$repo->findAll();
+    if(!$categorie){
+        return $this->json(['Status'=>'no category registered']);
+    }
     $data = [];
     foreach ($categorie as $category) {
         $data[] = [
@@ -274,7 +277,7 @@ public function display(CategoryRepository $repo): JsonResponse
             ]
     )]
 
-    public function update(Category $categorie, Request $request,EntityManagerInterface $emi): JsonResponse
+    public function update(Category $categorie, Request $request,EntityManagerInterface $emi,int $id): JsonResponse
     {
         $data=json_decode($request->getContent(),true);
         

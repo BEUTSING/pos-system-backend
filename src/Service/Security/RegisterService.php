@@ -114,6 +114,7 @@ class RegisterService
         $user->setColor($data['color']);
     }
 
+
        if(isset($data["role"])){
              $allowedRoles = array_column(RoleUser::cases(), 'value');
 
@@ -127,6 +128,10 @@ class RegisterService
             
 
          $user->setRoles($data["role"]);
+       }
+       if(isset($data['password'])){
+                   $user->setPassword($this->passwordHasher->hashPassword($user,$data['password'] )); 
+
        }
         $this->em->flush();
         return ['status'=>'User updated successfully'];

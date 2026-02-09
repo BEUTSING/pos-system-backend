@@ -58,9 +58,25 @@ final class SupplierController extends AbstractController
             )
         ]
     )]
-    public function display(SupplierRepository $supplierRepository): JsonResponse
+    public function list(SupplierRepository $supplierRepository): JsonResponse
     {
-        return $this->json($supplierRepository->findAll(), Response::HTTP_OK);
+        $suppliers=$supplierRepository->findAll();
+
+        if (!$suppliers) {
+            return $this->json(['Status' => 'No suppliers found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $data=[];
+        foreach($suppliers as $supplier){
+           $data[] = [
+                'id' => $supplier->getId(),
+                'name' => $supplier->getName(),
+                'email' => $supplier->getEmail(),
+                'city' => $supplier->getCity(),
+                'phone' => $supplier->getPhone(),
+            ];
+        }       
+        return $this->json($data, Response::HTTP_OK);
     }
 
 
