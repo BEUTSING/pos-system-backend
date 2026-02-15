@@ -3,13 +3,9 @@
 namespace App\Controller\product;
 
 use App\Entity\Product\Product;
-use App\Repository\Product\CategoryRepository;
-use App\Repository\Product\ProductRepository;
-use App\Repository\Stock\SupplierRepository;
-use App\Service\LogEntryService;
-use Doctrine\ORM\EntityManagerInterface;
+
+use App\Service\Product\ProductService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,11 +16,12 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Product')]
 final class ProductController extends AbstractController
 {
-    private LogEntryService $logEntryService;
-    public function __construct(private Security $security, LogEntryService $logEntryService)
+        private $productService;
+    public function __construct(ProductService $productService )
     {
-        $this->logEntryService = $logEntryService;
-    }
+        $this->productService = $productService;
+     }
+
     #[Route('/product/search/{pname}', name: 'app_product_search', methods: ['GET'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
    #[OA\Get(
@@ -70,27 +67,16 @@ final class ProductController extends AbstractController
         ]
     )]
 
-    public function search(ProductRepository $repo, string $pname): JsonResponse
+    public function search(string $pname): JsonResponse
     {
-        $products = $repo->findProduct($pname);
-        if (!$products) {
-            return $this->json(['error' => 'Product not found'], Response::HTTP_NOT_FOUND);
+        try {
+            $data = $this->productService->searchP($pname);
+            return $this->json($data, Response::HTTP_OK);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
         }
-        $data = [];
-        foreach ($products as $product) {
-            $data[] = [
-                'id' => $product->getId(),
-                'productname' => $product->getProductname(),
-                'category' => $product->getCategory() ? $product->getCategory()->getCategoryname() : null,
-                'supplier' => $product->getSupplier() ? $product->getSupplier()->getName() : null,
-                'saleprice' => $product->getSaleprice(),
-                'purchaseprice' => $product->getPurchaseprice(),
-                'quantity' => $product->getQuantity(),
-                'minimumstock' => $product->getMinimumstock(),
-            ];
-        }
-        return $this->json($data, Response::HTTP_OK);
     }
+
 
     #[Route('/product/list', name: 'app_product_display', methods: ['GET'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
@@ -129,11 +115,18 @@ final class ProductController extends AbstractController
                 )
             ]
         )]
-    public function list(ProductRepository $repos): JsonResponse
-    {
-       
 
-    }
+    
+        public function list(): JsonResponse
+        {
+            try{
+                    $data= $this->productService->listP();
+                    return $this->json($data, Response::HTTP_OK);
+                }catch(\RuntimeException $e){
+                    return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+
+            }
+        }
 
     #[Route('/product/create', name: 'app_product_create', methods: ['POST'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
@@ -184,9 +177,18 @@ final class ProductController extends AbstractController
             )
         ]
     )]
+    
     public function create(Request $request): JsonResponse
     {
-        try{}
+        try{
+
+            $data= $this->productService->createP($request);
+            return $this->json($data, Response::HTTP_CREATED);
+        }catch(\InvalidArgumentException $e){
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);  
+       }
+       catch(\RuntimeException $e){
+        return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);}
     }
 
     #[Route('/product/modify/{id}', name: 'app_product_update', methods: ['PUT'])]
@@ -245,15 +247,28 @@ final class ProductController extends AbstractController
         ]
     )]
 
-    public function update(Product $product, Request $request, EntityManagerInterface $em,CategoryRepository $categoryrepository,SupplierRepository $supplierrepository): JsonResponse
+    
+    public function update(int $id, Request $request ): JsonResponse
     {
+        try{
+            $data= $this->productService->updateP($id,$request);
+            return $this->json($data, Response::HTTP_OK);
+        } 
+        catch(\InvalidArgumentException $e){
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+
+        } 
+        catch(\RuntimeException $e){
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
+
     }
 
     #[Route('/product/delete/{id}', name: 'app_product_delete', methods: ['DELETE'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
     #[OA\Delete(
         path: "/api/v1/product/delete/{id}",
-        summary: "Delete a product",
+        summary: " Delete a product",
         parameters: [
             new OA\Parameter(
                 name: "id",
@@ -281,8 +296,15 @@ final class ProductController extends AbstractController
         ]
     )]
 
-    public function delete(Product $product, EntityManagerInterface $em): JsonResponse
+    public function delete(int $id): JsonResponse
     {
+        try{
+           $data= $this->productService->deleteP($id);
+            return  $this->json(['message' => $data], Response::HTTP_OK);
+        }catch(\InvalidArgumentException $e){
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);  
+        }
     }
-
 }
+
+

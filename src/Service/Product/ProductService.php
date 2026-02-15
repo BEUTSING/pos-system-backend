@@ -9,7 +9,7 @@ use App\Service\LogEntryService;
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\BrowserKit\Request;
+use Symfony\Component\HttpFoundation\Request;
 
 class ProductService{
 
@@ -30,7 +30,7 @@ class ProductService{
         }
 
             //search
-        public function search(string $pname): array
+        public function searchP(string $pname): array
         {
         $products = $this->ProductRepository->findProduct($pname);
         if (!$products) {
@@ -54,7 +54,7 @@ class ProductService{
 
 
             //list
-        public function list():array
+        public function listP():array
         {
             $products =  $this->ProductRepository->findAll();
                 if (!$products) {
@@ -79,15 +79,16 @@ class ProductService{
     }
     
     //create
-        public function create(Request $request): array
+        public function createP(Request $request): array
         {
             $data= json_decode($request->getContent(), true);
             $user=$this->security->getUser();
             $required=['productname','category','saleprice','purchaseprice','quantity','minimumstock'];
             foreach($required as $field){
-                if(empty($data[$field]) || !isset($data[$field])){
+               if (!isset($data[$field])) {
                     throw new \InvalidArgumentException("The field $field is required");
-                }}
+                }
+                }
 
                 $category = $this->categoryrepository->find($data['category']);
                 if(!$category){
@@ -119,17 +120,17 @@ class ProductService{
                     'quantity' => $product->getQuantity(),
                     'minimumstock' => $product->getMinimumstock(),
                 ];
-                // $this->logEntryService->createLogEntry('Product created: ' . $product->getProductname(). " by".$user->getName());
+                $this->logEntryService->createLogEntry('Product created: ' . $product->getProductname(). " by");
 
                 return $data;
             }
 
 
-            public function update(Request $request): array
+            public function updateP(int $id,Request $request): array
             {
                 $data = json_decode($request->getContent(), true);
 
-                $product = $this->ProductRepository->find($data['id']);
+                $product = $this->ProductRepository->find($id);
                 if (!$product) {
                     throw new \InvalidArgumentException('Product not found');
                 }
@@ -181,13 +182,18 @@ class ProductService{
             }
 
             //delete
-            public function delete(Product $product, EntityManagerInterface $em) 
-            {
-                $em->remove($product);
-                $em->flush();
+            public function deleteP(int $id): string
+             {
+                $product = $this->ProductRepository->find($id);
+                if (!$product) {
+                    throw new \InvalidArgumentException('Product not found');
+                }
+            
+                $this->em->remove($product);
+                $this->em->flush();
                 
                 $this->logEntryService->createLogEntry('Product deleted: ' . $product->getProductname());
-                return  ['message' => 'Product deleted successfully'] ;
+                return  'Product deleted successfully' ;
             }
 
         }
