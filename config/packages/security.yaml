@@ -42,7 +42,7 @@ security:
 
     access_control:
         - { path: ^/api/v1/user/login, roles: PUBLIC_ACCESS }
-
+        - { path: ^/api/v1/user/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/(login|token/refresh), roles: PUBLIC_ACCESS }
         
         # Routes statistic
@@ -59,7 +59,6 @@ security:
         - { path: ^/stock_movement,  roles: ROLE_MANAGER }                
         
         # Routes user
-        - { path: ^/user/register,  roles: ROLE_ADMIN}
         - { path:  ^/user/modify,  roles: ROLE_ADMIN}
         
         # Routes category
