@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Repository\Security;
+namespace App\Repository\Company;
 
-use App\Entity\Security\Company;
+use App\Entity\Company\Company;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 

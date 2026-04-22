@@ -1,13 +1,15 @@
 <?php
 
-namespace App\Entity\Security;
+namespace App\Entity\Company;
 
-use App\Repository\Security\CompanyRepository;
+use App\Entity\Traits\TimestampableTrait;
+use App\Repository\Company\CompanyRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CompanyRepository::class)]
 class Company
 {
+    use TimestampableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

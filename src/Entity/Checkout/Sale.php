@@ -3,15 +3,16 @@
 namespace App\Entity\Checkout;
 
 use App\Entity\Security\User;
+use App\Entity\Traits\CompanyTrait;
 use App\Entity\Traits\TimestampableTrait;
 use App\Repository\Checkout\SaleRepository;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SaleRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 class Sale
 {   
+    use CompanyTrait;
     use TimestampableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]

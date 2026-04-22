@@ -24,6 +24,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Entity/Security'
                 prefix: 'App\Entity\Security'
                 alias: Security
+            Company:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Entity/Company'
+                prefix: 'App\Entity\Company'
+                alias: Company
             Checkout:
                 type: attribute
                 is_bundle: false

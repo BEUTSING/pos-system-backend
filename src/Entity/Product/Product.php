@@ -5,6 +5,7 @@ namespace App\Entity\Product;
 use App\Entity\Stock\Purchaseorder;
 use App\Entity\Stock\Stockmovement;
 use App\Entity\Stock\Supplier;
+use App\Entity\Traits\CompanyTrait;
 use App\Entity\Traits\TimestampableTrait;
 use App\Repository\Product\ProductRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -17,7 +18,8 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\HasLifecycleCallbacks]
 
 class Product
-{
+{ 
+    use CompanyTrait;
     Use TimestampableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]

@@ -2,6 +2,7 @@
 
 namespace App\Entity\Product;
 
+use App\Entity\Traits\CompanyTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use App\Entity\Traits\TimestampableTrait;
@@ -14,7 +15,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 class Category
 {
-        
+    use CompanyTrait;    
     Use TimestampableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]

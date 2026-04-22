@@ -1,13 +1,13 @@
 <?php
 namespace App\Entity\Traits;
- use App\Entity\Security\Company;
+ use App\Entity\Company\Company;
  use Doctrine\ORM\Mapping as ORM;
 
  trait CompanyTrait
  {
       //Trait implementation
     #[ORM\ManyToOne(targetEntity: Company::class)]
-    #[ORM\JoinColumn(nullable: false)]     
+    #[ORM\JoinColumn(nullable: true)]     
     private ?Company $company = null;
 
      public function getCompany(): ?Company
