@@ -6,6 +6,7 @@ use App\Entity\Checkout\Cancellation;
 use App\Entity\Checkout\CustomerOrder;
 use App\Entity\Checkout\Sale;
 use App\Entity\Stock\Stockmovement;
+use App\Entity\Traits\CompanyTrait;
 use App\Entity\Traits\ContactTrait;
 use App\Entity\Traits\TimestampableTrait;
 use App\Repository\Security\UserRepository as SecurityUserRepository;
@@ -20,7 +21,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[ORM\HasLifecycleCallbacks]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
-{   
+{       
+    use CompanyTrait;
     use ContactTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]

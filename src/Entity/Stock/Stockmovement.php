@@ -4,6 +4,7 @@ namespace App\Entity\Stock;
 
 use App\Entity\Product\Product;
 use App\Entity\Security\User;
+use App\Entity\Traits\CompanyTrait;
 use Doctrine\ORM\Mapping as ORM;
 use App\Entity\Traits\TimestampableTrait;
 use App\Repository\Stock\StockmovementRepository;
@@ -13,6 +14,7 @@ use App\Repository\Stock\StockmovementRepository;
 
 class Stockmovement
 {
+        use CompanyTrait;
     use TimestampableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]

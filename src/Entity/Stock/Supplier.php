@@ -3,6 +3,7 @@
 namespace App\Entity\Stock;
 
 use App\Entity\Product\Product;
+use App\Entity\Traits\CompanyTrait;
 use App\Entity\Traits\ContactTrait;
 use App\Repository\Stock\SupplierRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -13,6 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\HasLifecycleCallbacks]
 class Supplier
 {
+    use CompanyTrait;
     use ContactTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]

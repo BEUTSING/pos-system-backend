@@ -41,6 +41,7 @@ security:
                 check_path: /api/v1/token/refresh
 
     access_control:
+        - { path: ^/api/v1/doc, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/user/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/user/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/(login|token/refresh), roles: PUBLIC_ACCESS }
@@ -70,4 +71,4 @@ security:
         # Routes supplier
         - { path: ^/supplier,  roles: ROLE_MANAGER}
 
-        - { path: ^/api/v1,       roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/v1,   roles: IS_AUTHENTICATED_FULLY }
