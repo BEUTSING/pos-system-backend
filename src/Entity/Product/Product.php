@@ -19,6 +19,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 class Product
 { 
+    use CompanyTrait;
     Use TimestampableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]

@@ -12,6 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\HasLifecycleCallbacks]
 class Sale
 {   
+    use CompanyTrait;
     use TimestampableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]

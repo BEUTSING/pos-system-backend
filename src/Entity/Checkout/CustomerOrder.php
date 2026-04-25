@@ -3,6 +3,7 @@
 namespace App\Entity\Checkout;
 
 use App\Entity\Security\User;
+use App\Entity\Traits\CompanyTrait;
 use App\Entity\Traits\TimestampableTrait;
 use App\Repository\Checkout\CustomerOrderRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -13,7 +14,8 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: '`customer_order`')]
 #[ORM\HasLifecycleCallbacks]
 class CustomerOrder
-{
+{  
+     use CompanyTrait;
     use TimestampableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]

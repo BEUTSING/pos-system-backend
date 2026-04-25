@@ -21,7 +21,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[ORM\HasLifecycleCallbacks]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
-{       
+{    
+    use CompanyTrait;   
     use ContactTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]

@@ -15,6 +15,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 class Category
 {
+    
     use CompanyTrait;    
     Use TimestampableTrait;
     #[ORM\Id]

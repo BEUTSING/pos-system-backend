@@ -3,6 +3,7 @@
 namespace App\Entity\Checkout;
 
 use App\Entity\Product\Product;
+use App\Entity\Traits\CompanyTrait;
 use App\Entity\Traits\TimestampableTrait;
 use App\Repository\Checkout\OrderItemRepository;
 use Doctrine\ORM\Mapping as ORM;
@@ -14,6 +15,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 class OrderItem
 {   
+    use CompanyTrait;
     use TimestampableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]

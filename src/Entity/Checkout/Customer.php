@@ -2,6 +2,7 @@
 
 namespace App\Entity\Checkout;
 
+use App\Entity\Traits\CompanyTrait;
 use App\Entity\Traits\ContactTrait;
 use App\Repository\Checkout\CustomerRepository ;
 use Doctrine\ORM\Mapping as ORM;
@@ -10,7 +11,8 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass:CustomerRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 class Customer
-{
+{   
+    use CompanyTrait;
     use ContactTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]
