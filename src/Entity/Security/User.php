@@ -22,7 +22,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\HasLifecycleCallbacks]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {       
-    use CompanyTrait;
     use ContactTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]

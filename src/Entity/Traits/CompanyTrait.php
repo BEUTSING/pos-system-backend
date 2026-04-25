@@ -7,7 +7,7 @@ namespace App\Entity\Traits;
  {
       //Trait implementation
     #[ORM\ManyToOne(targetEntity: Company::class)]
-    #[ORM\JoinColumn(nullable: true)]     
+    #[ORM\JoinColumn(nullable: false)]     
     private ?Company $company = null;
 
      public function getCompany(): ?Company

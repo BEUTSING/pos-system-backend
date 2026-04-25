@@ -14,8 +14,7 @@ use App\Repository\Stock\StockmovementRepository;
 
 class Stockmovement
 {
-        use CompanyTrait;
-    use TimestampableTrait;
+        use TimestampableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

@@ -14,7 +14,6 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\HasLifecycleCallbacks]
 class Supplier
 {
-    use CompanyTrait;
     use ContactTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]
