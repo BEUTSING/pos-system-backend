@@ -5,9 +5,9 @@ namespace App\Entity\Security;
 use App\Entity\Checkout\Cancellation;
 use App\Entity\Checkout\CustomerOrder;
 use App\Entity\Checkout\Sale;
+use App\Entity\Company\Company;
 use App\Entity\Stock\Stockmovement;
-use App\Entity\Traits\CompanyTrait;
-use App\Entity\Traits\ContactTrait;
+ use App\Entity\Traits\ContactTrait;
 use App\Entity\Traits\TimestampableTrait;
 use App\Repository\Security\UserRepository as SecurityUserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -21,9 +21,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[ORM\HasLifecycleCallbacks]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
-{    
-    use CompanyTrait;   
-    use ContactTrait;
+{   
+    use TimestampableTrait; 
+     use ContactTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -72,12 +72,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Stockmovement::class, mappedBy: 'user')]
     private Collection $stockmovements;
 
+    /**
+     * @var Collection<int, CustomerOrder>
+     */
+    #[ORM\OneToMany(targetEntity: Company::class, mappedBy: 'owner')]
+    private Collection $companies;
+
+    #[ORM\ManyToOne(targetEntity: Company::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Company $company = null;
+
+
     public function __construct()
     {
         $this->customerOrders = new ArrayCollection();
         $this->sales = new ArrayCollection();
         $this->cancellations = new ArrayCollection();
         $this->stockmovements = new ArrayCollection();
+        $this->companies = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -292,5 +304,42 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+
+    public function getCompanies(): Collection
+    {
+        return $this->companies;
+    }
+
+    public function addOwner(Company $company): static
+    {
+        if (!$this->companies->contains($company)) {
+            $this->companies->add($company);
+            $company->setOwner($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOwner(Company $company): static
+    {
+        if ($this->companies->removeElement($company)) {
+            // set the owning side to null (unless already changed)
+            if ($company->getOwner() === $this) {
+                $company->setOwner(null);
+            }
+        }
+
+        return $this;
+    }
+        public function getCompany(): ?Company
+        {
+            return $this->company;
+        }
+
+        public function setCompany(?Company $company): static
+        {
+            $this->company = $this->company;
+            return $this;
+        }
 
 }

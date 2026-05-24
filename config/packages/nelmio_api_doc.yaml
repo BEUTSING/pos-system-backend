@@ -15,6 +15,7 @@ nelmio_api_doc:
             - Bearer: []
         tags:
             - name: Authentication
+            - name: Users
             - name: Product
             - name: Category
             - name: Supplier

@@ -5,6 +5,7 @@ use App\Entity\Product\Product;
 use App\Repository\Product\CategoryRepository;
 use App\Repository\Product\ProductRepository;
 use App\Repository\Stock\SupplierRepository;
+// use App\Service\CompanyService;
 use App\Service\LogEntryService;
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
@@ -18,7 +19,8 @@ class ProductService{
         private $supplierrepository;
         private $logEntryService;
         private $security;
-        private $ProductRepository  ;
+        private $ProductRepository ;
+        // private $companyService;
         public function __construct(LogEntryService $logEntryService,EntityManagerInterface $em,CategoryRepository $categoryrepository, SupplierRepository $supplierrepository,Security $security,ProductRepository $repo)
         {
         $this->security= $security;
@@ -56,7 +58,10 @@ class ProductService{
             //list
         public function listP():array
         {
-            $products =  $this->ProductRepository->findAll();
+            // $company= $this->companyService->currentCompany();
+            //  $products =  $this->ProductRepository->findProductAll($company);
+                         $products =  $this->ProductRepository->findAll();
+
                 if (!$products) {
                     throw new RuntimeException('no products registered');
                 }
@@ -82,7 +87,11 @@ class ProductService{
         public function createP(Request $request): array
         {
             $data= json_decode($request->getContent(), true);
-            $user=$this->security->getUser();
+
+            // Get the current company
+            // $company= $this->companyService->currentCompany();
+
+            // Validate required fields
             $required=['productname','category','saleprice','purchaseprice','quantity','minimumstock'];
             foreach($required as $field){
                if (!isset($data[$field])) {
@@ -106,20 +115,33 @@ class ProductService{
                 $product->setPurchaseprice($data['purchaseprice']);
                 $product->setQuantity($data['quantity']);
                 $product->setMinimumstock($data['minimumstock']);
+                // $product->setCompany($company);
 
                 $this->em->persist($product);
                 $this->em->flush();
                 $data=[];
                 $data[] = [
-                    'id' => $product->getId(),
-                    'productname' => $product->getProductname(),
-                    'category' => $product->getCategory()->getCategoryname(),
-                    'supplier' => $product->getSupplier() ? $product->getSupplier()->getName() : null,
-                    'saleprice' => $product->getSaleprice(),
-                    'purchaseprice' => $product->getPurchaseprice(),
-                    'quantity' => $product->getQuantity(),
-                    'minimumstock' => $product->getMinimumstock(),
-                ];
+                'id' => $product->getId(),
+
+                'productname' => $product->getProductname(),
+
+                'category' => [
+                    'id' => $product->getCategory()->getId(),
+                    'name' => $product->getCategory()->getCategoryname(),
+                    'description' => $product->getCategory()->getDescription(),
+                ],
+
+                'supplier' => $product->getSupplier() ? [
+                    'id' => $product->getSupplier()->getId(),
+                    'name' => $product->getSupplier()->getName(),
+                ] : null, 
+                'saleprice' => (float) $product->getSaleprice(),
+                'purchaseprice' => (float) $product->getPurchaseprice(), 
+                'quantity' => $product->getQuantity(),
+                'minimumstock' => $product->getMinimumstock(), 
+                'created_at' => $product->getCreatedAt()->format('Y-m-d H:i:s'),
+                'updated_at' => $product->getUpdatedAt()->format('Y-m-d H:i:s'),
+            ];
                 $this->logEntryService->createLogEntry('Product created: ' . $product->getProductname(). " by");
 
                 return $data;

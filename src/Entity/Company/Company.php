@@ -3,8 +3,11 @@
 namespace App\Entity\Company;
 
 use App\Entity\Traits\TimestampableTrait;
+use App\Entity\Security\User;
 use App\Repository\Company\CompanyRepository;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: CompanyRepository::class)]
 class Company
@@ -32,6 +35,19 @@ class Company
 
     #[ORM\Column(length: 255)]
     private ?string $siteWeb = null;
+
+    #[ORM\ManyToOne(inversedBy: 'Company')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $owner = null;
+  
+    #[ORM\OneToMany(targetEntity: User::class, mappedBy: 'company')]
+    private Collection $employees;
+
+    public function __construct()
+    {
+       $this->employees = new ArrayCollection();}
+
+
 
     public function getId(): ?int
     {
@@ -109,4 +125,19 @@ class Company
 
         return $this;
     }
+
+    public function getOwner(): ? User
+    {
+        return $this->owner;
+    }
+    public function setOwner(?User $owner): static
+    {
+          $this->owner = $owner;
+        return $this;
+    }
+
+            public function getEmployees(): Collection
+        {
+            return $this->employees;
+        }
 }

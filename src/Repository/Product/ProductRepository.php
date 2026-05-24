@@ -2,6 +2,7 @@
 
 namespace App\Repository\Product;
 
+use App\Entity\Company\Company;
 use App\Entity\Product\Product;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -25,6 +26,15 @@ class ProductRepository extends ServiceEntityRepository
             ->getResult();
     }
     
+    public function findProductAll(Company $cp): array
+    {
+        $q= $this->createQueryBuilder('p')
+            ->andWhere('p.company = :company')
+            ->setParameter('company', $cp)
+            ->orderBy('p.id', 'ASC');
+           return $q->getQuery()->getResult();
+            
+    }
     //    /**
     //     * @return Product[] Returns an array of Product objects
     //     */
