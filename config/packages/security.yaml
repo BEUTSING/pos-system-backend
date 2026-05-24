@@ -70,5 +70,7 @@ security:
 
         # Routes supplier
         - { path: ^/supplier,  roles: ROLE_MANAGER}
+        # route company
+        - { path: ^/company,  roles: ROLE_ADMIN}
 
         - { path: ^/api/v1,   roles: IS_AUTHENTICATED_FULLY }

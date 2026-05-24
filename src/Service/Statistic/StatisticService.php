@@ -4,139 +4,194 @@ namespace App\Service\Statistic;
 
 use App\Repository\Checkout\SaleRepository;
 use App\Repository\Product\ProductRepository;
+use App\Service\Company\CompanyService;
 use Symfony\Component\HttpFoundation\Request;
 
 class StatisticService
-
 {
     private $salerepository;
     private $productRepository;
-    public function __construct(SaleRepository $salerepository,ProductRepository $productRepository){
+    private $companyService;
+
+    public function __construct(
+        SaleRepository $salerepository,
+        ProductRepository $productRepository,
+        CompanyService $companyService
+    ) {
         $this->salerepository = $salerepository;
         $this->productRepository = $productRepository;
+        $this->companyService = $companyService;
     }
-    public function getSaleStatistic( Request $request){
 
-        $data=json_decode($request->getContent(),true);
+    // ─── GET SALES BY PERIOD: filter sales by a given time period ────────────────
+    public function getSaleStatistic(Request $request): array
+    {
+        $data = json_decode($request->getContent(), true);
+        $period = $data['period'];
 
-        $period= $data["period"];
-        $startdate= new \DateTimeImmutable();
-        $enddate= new \DateTimeImmutable();
+        $startdate = new \DateTimeImmutable();
+        $enddate   = new \DateTimeImmutable();
 
         switch ($period) {
-            case "today":
-                $startdate=$startdate->setTime(0,0,0);
+            case 'today':
+                $startdate = $startdate->setTime(0, 0, 0);
                 break;
-            case "yesterday":
-                $startdate=$startdate->modify("-1 day")->setTime(0,0,0);  
-                $enddate=$enddate->modify("-1 day")->setTime(23,59,59);
+            case 'yesterday':
+                $startdate = $startdate->modify('-1 day')->setTime(0, 0, 0);
+                $enddate   = $enddate->modify('-1 day')->setTime(23, 59, 59);
                 break;
-            case "this_week":
-                $startdate=$startdate->modify("monday this week")->setTime(0,0,0);
+            case 'this_week':
+                $startdate = $startdate->modify('monday this week')->setTime(0, 0, 0);
                 break;
-            case "this_month":
-                $startdate=$startdate->modify("first day of this month")->setTime(0,0,0);
+            case 'this_month':
+                $startdate = $startdate->modify('first day of this month')->setTime(0, 0, 0);
                 break;
-            case "this_year";
-                $startdate=$startdate->modify("first day of january this year")->setTime(0,0,0);
+            case 'this_year': // ← fixed: was "this_year"; (semicolon instead of colon)
+                $startdate = $startdate->modify('first day of january this year')->setTime(0, 0, 0);
                 break;
             default:
-            // Handle custom period if needed
-            return [];
+                return [];
         }
-        $sale=$this->salerepository->findSalesByPeriod($startdate,$enddate);
-        return $this->formatSalesData($sale);
-}
 
-//get a list of sales
-public function getAllSales(){
-     $sales = $this->salerepository->findAll();
-        return $this->formatSalesData($sales);
-} 
+        // Automatically retrieve the current company of the authenticated user
+        $company = $this->companyService->getCurrentCompany();
+        if (!$company) {
+            throw new \RuntimeException('No company assigned to the authenticated user');
+        }
 
-public function getSalesBySeller(Request $request)
-    {
-        $data=json_decode($request->getContent(),true);
-        $teller=$data["teller_id"];
-        $sales = $this->salerepository->findBy(['teller' => $teller]);
+        // Filter sales by period AND current company
+        $sales = $this->salerepository->findSalesByPeriodAndCompany($startdate, $enddate, $company);
 
-        if(!$sales){
-            throw new \Exception("Sales not found for this seller");}
-            
         return $this->formatSalesData($sales);
     }
 
-public function getSalesByCategory(Request $request)
+    // ─── GET ALL SALES: retrieve all sales of the current company ────────────────
+    public function getAllSales(): array
     {
-        $data=json_decode($request->getContent(),true);
-           if (!isset($data['categoryId'])) {
-        throw new \Exception('thi');
-    }
-    
-        $categoryId=$data["categoryId"];
-        $sales = $this->salerepository->findSaleByCategory($categoryId);
-        if(!$sales){
-            throw new \Exception("sales not found for this category");}
-            
-        return $this->formatSalesData($sales);
-    }    
-public function getSalesByProduct(Request $request)
-    {
-        $data=json_decode($request->getContent(),true);
+        // Automatically retrieve the current company of the authenticated user
+        $company = $this->companyService->getCurrentCompany();
+        if (!$company) {
+            throw new \RuntimeException('No company assigned to the authenticated user');
+        }
 
-        $product = $this->productRepository->find($data["productId"]);
+        // Filter sales by the current company only — not findAll()
+        $sales = $this->salerepository->findBy(['company' => $company]);
+
+        return $this->formatSalesData($sales);
+    }
+
+    // ─── GET SALES BY SELLER: filter sales by a specific teller ─────────────────
+    public function getSalesBySeller(Request $request): array
+    {
+        $data   = json_decode($request->getContent(), true);
+        $teller = $data['teller_id'];
+
+        // Automatically retrieve the current company of the authenticated user
+        $company = $this->companyService->getCurrentCompany();
+        if (!$company) {
+            throw new \RuntimeException('No company assigned to the authenticated user');
+        }
+
+        // Filter by teller AND current company
+        $sales = $this->salerepository->findBy(['teller' => $teller, 'company' => $company]);
+        if (!$sales) {
+            throw new \Exception('Sales not found for this seller');
+        }
+
+        return $this->formatSalesData($sales);
+    }
+
+    // ─── GET SALES BY CATEGORY: filter sales by a specific product category ──────
+    public function getSalesByCategory(Request $request): array
+    {
+        $data = json_decode($request->getContent(), true);
+
+        if (!isset($data['categoryId'])) {
+            throw new \InvalidArgumentException('The field categoryId is required');
+        }
+
+        // Automatically retrieve the current company of the authenticated user
+        $company = $this->companyService->getCurrentCompany();
+        if (!$company) {
+            throw new \RuntimeException('No company assigned to the authenticated user');
+        }
+
+        $sales = $this->salerepository->findSaleByCategoryAndCompany($data['categoryId'], $company);
+        if (!$sales) {
+            throw new \Exception('Sales not found for this category');
+        }
+
+        return $this->formatSalesData($sales);
+    }
+
+    // ─── GET SALES BY PRODUCT: filter sales by a specific product ────────────────
+    public function getSalesByProduct(Request $request): array
+    {
+        $data = json_decode($request->getContent(), true);
+
+        $product = $this->productRepository->find($data['productId']);
         if (!$product) {
-            return [];
+            throw new \InvalidArgumentException('Product not found');
         }
-        $sales = $this->salerepository->findSalebyproduct($product);
+
+        // Automatically retrieve the current company of the authenticated user
+        $company = $this->companyService->getCurrentCompany();
+        if (!$company) {
+            throw new \RuntimeException('No company assigned to the authenticated user');
+        }
+
+        $sales = $this->salerepository->findSaleByProductAndCompany($product, $company);
+
         return $this->formatSalesData($sales);
-}
+    }
 
-private function formatSalesData(array $sales){
+    // ─── HELPER: format sales data into a structured array ───────────────────────
+    private function formatSalesData(array $sales): array
+    {
+        $data          = [];
+        $totalsale     = 0;
+        $totalpurchase = 0;
+        $profit        = 0; // ← fixed: initialized to 0 to avoid undefined variable crash
 
-    $data = [];
-    $totalsale = 0;
-    $totalpucharse = 0;
+        foreach ($sales as $sale) {
+            $productsInSale = [];
 
-    foreach($sales as $sale){
+            // Check if the sale has a customer order
+            if ($sale->getCustomerOrder()) {
+                foreach ($sale->getCustomerOrder()->getOrderItems() as $orderItem) {
+                    $saleprice     = $orderItem->getPrice();
+                    $purchaseprice = $orderItem->getProduct()->getPurchasePrice();
+                    $quantity      = $orderItem->getQuantity();
 
-        $productsInSale = [];
-        // Check if the sale has a customer order
-        if ($sale->getCustomerOrder()) {
+                    // Accumulate totals
+                    $totalsale     += $saleprice * $quantity;
+                    $totalpurchase += $purchaseprice * $quantity;
 
-            foreach ($sale->getCustomerOrder()->getOrderItems() as $orderItem) {
-                 $salprice = $orderItem->getPrice();
-                $purcharseprice = $orderItem->getProduct()->getPurchasePrice(); 
-                $quantity = $orderItem->getQuantity();
+                    $productsInSale[] = [
+                        'product_name' => $orderItem->getProduct()->getProductname(),
+                        'quantity'     => $quantity,
+                        'price'        => $saleprice,
+                    ];
+                }
 
-                  // Accumulate for overall totals
-                $totalsale += $salprice * $quantity;
-                $totalpucharse += $purcharseprice * $quantity;
-
-                $productsInSale[] = [
-                    'product_name' => $orderItem->getProduct()->getProductname(),
-                    'quantity' => $orderItem->getQuantity(),
-                    'price' => $orderItem->getPrice(),
-                ];
+                // Recalculate profit after each sale
+                $profit = $totalsale - $totalpurchase;
             }
-            $profil=$totalsale - $totalpucharse;
+
+            $data[] = [
+                'id'           => $sale->getId(),
+                'teller'       => $sale->getTeller()->getName(),
+                'products'     => $productsInSale,
+                'date_created' => $sale->getCreatedAt()->format('Y-m-d H:i:s'),
+                'date_update'  => $sale->getUpdatedAt()->format('Y-m-d H:i:s'),
+            ];
         }
 
-        $data[] = [
-
-            'id'=> $sale->getId(),
-            'teller'=>$sale->getTeller()->getName(),
-            'products'=> $productsInSale,
-            'date_created'=>$sale->getCreatedAt()->format('Y-m-d H:i:s'),
-            'date_update'=>$sale->getUpdatedAt()->format('Y-m-d H:i:s'),
-        ];    
-}
-return [
-             'total_sales' => $totalsale,
-            'total_purchases' => $totalpucharse ,
-            'profil'=> $profil,
-            'sales' => $data
-
-];
-}
+        return [
+            'total_sales'     => $totalsale,
+            'total_purchases' => $totalpurchase,
+            'profit'          => $profit,
+            'sales'           => $data,
+        ];
+    }
 }

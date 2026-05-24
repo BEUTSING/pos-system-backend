@@ -5,6 +5,7 @@ namespace App\Service\Security;
 use App\Entity\Security\User;
 use App\Enum\RoleUser;
 use App\Repository\Security\UserRepository;
+use App\Service\Company\CompanyService;
 use App\Service\LogEntryService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,20 +17,23 @@ class UsersSercice
     private $passwordHasher;
     private $userrepo;
     private $logEntryService;
+    private $companyService;    
 
     public function __construct(
         EntityManagerInterface $em,
         LogEntryService $logEntryService,
         UserPasswordHasherInterface $passwordHasher,
-        UserRepository $userrepo
+        UserRepository $userrepo,
+        CompanyService $companyService
     ) {
         $this->em = $em;
         $this->passwordHasher = $passwordHasher;
         $this->userrepo = $userrepo;
         $this->logEntryService = $logEntryService;
+        $this->companyService = $companyService;
     }
 
-    // Create user
+    // Create user and automatically assign them to the current company
     public function createUsers(Request $request): array
     {
         $data = json_decode($request->getContent(), true);
@@ -53,6 +57,12 @@ class UsersSercice
             throw new \RuntimeException('This user already exists');
         }
 
+        // Automatically retrieve the current company of the authenticated admin
+        $company = $this->companyService->getcurrentCompany();
+        if (!$company) {
+            throw new \RuntimeException('No company assigned to the authenticated user');
+        }
+
         // Create user
         $user = new User();
         $user->setName($data['name']);
@@ -62,7 +72,7 @@ class UsersSercice
         $user->setEmail($data['email']);
 
         // Validate and set roles
-         if (isset($data['role'])) {
+        if (isset($data['role'])) {
             $allowedRoles = array_column(RoleUser::cases(), 'value');
             foreach ($data['role'] as $r) {
                 if (!in_array($r, $allowedRoles)) {
@@ -73,6 +83,8 @@ class UsersSercice
             }
             $user->setRoles($data['role']);
         }
+
+        $user->setCompany($company); // ← automatically assigned from the current session
         $user->setPassword($this->passwordHasher->hashPassword($user, $data['password']));
 
         $this->em->persist($user);
@@ -81,30 +93,40 @@ class UsersSercice
         $this->logEntryService->createLogEntry('User created: ' . $user->getName());
 
         return [
-            'id'    => $user->getId(),
-            'name'  => $user->getName(),
-            'phone' => $user->getPhone(),
-            'city'  => $user->getCity(),
-            'color' => $user->getColor(),
-            'email' => $user->getEmail(),
-            'roles' => $user->getRoles(),
+            'id'      => $user->getId(),
+            'name'    => $user->getName(),
+            'phone'   => $user->getPhone(),
+            'city'    => $user->getCity(),
+            'color'   => $user->getColor(),
+            'email'   => $user->getEmail(),
+            'roles'   => $user->getRoles(),
+            'company' => $user->getCompany()?->getNameComp(),
         ];
     }
 
-    // List users
+    // List only users belonging to the current company
     public function listUsers(): array
     {
-        $users = $this->userrepo->findAll();
+        // Automatically retrieve the current company of the authenticated admin
+        $company = $this->companyService->getcurrentCompany();
+        if (!$company) {
+            throw new \RuntimeException('No company assigned to the authenticated user');
+        }
+
+        // Filter users by the current company only — not findAll()
+        $users = $this->userrepo->findBy(['company' => $company]);
+
         $data = [];
         foreach ($users as $user) {
             $data[] = [
-                'id'    => $user->getId(),
-                'name'  => $user->getName(),
-                'phone' => $user->getPhone(),
-                'city'  => $user->getCity(),
-                'color' => $user->getColor(),
-                'email' => $user->getEmail(),
-                'roles' => $user->getRoles(),
+                'id'      => $user->getId(),
+                'name'    => $user->getName(),
+                'phone'   => $user->getPhone(),
+                'city'    => $user->getCity(),
+                'color'   => $user->getColor(),
+                'email'   => $user->getEmail(),
+                'roles'   => $user->getRoles(),
+                'company' => $user->getCompany()?->getNameComp(),
             ];
         }
         return $data;

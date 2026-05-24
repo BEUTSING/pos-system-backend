@@ -29,28 +29,34 @@ class CompanyService
         $this->companyRepository = $companyRepository;
         $this->security = $security;
     }
-// Get the current user's company
-   public function currentCompany(int $companyId): Company
-{
-    $user = $this->security->getUser();
 
-    if (!$user instanceof User) {
-        throw new \RuntimeException('User not authenticated');
+    // get company of owner and company of employee by user
+
+   public function getCurrentCompany(): ?Company
+    {
+        /**
+         * USER CONNECTÉ
+         */
+        $user = $this->security->getUser();
+
+        if (!$user instanceof User) {
+            return null;
+        }
+
+  //      if the user is an owner, return the company they own      
+        if (in_array('ROLE_OWNER', $user->getRoles())) {
+
+            return $this->companyRepository->findOneBy([
+                'owner' => $user
+            ]);
+        }
+
+        /**
+         * EMPLOYEES
+         */
+        return $user->getCompany();
     }
-
-    $company = $this->companyRepository->find($companyId);
-
-    if (!$company) {
-        throw new \InvalidArgumentException('Company not found');
-    }
-
-    // Vérifie que la company choisie appartient bien au user connecté
-    if ($company->getOwner() !== $user) {
-        throw new \RuntimeException('Access denied: this company does not belong to you');
-    }
-
-    return $company;
-}
+   
     // Search company by name
     public function searchC(string $cname): array
     {
@@ -67,6 +73,8 @@ class CompanyService
         return $data;
     }
 
+    // get company of owner
+    
     // List all companies (owned by the current user)
     public function listC(): array
     {

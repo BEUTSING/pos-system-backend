@@ -4,6 +4,7 @@ namespace App\Controller\Stock;
 
 use App\Entity\Stock\Supplier;
 use App\Repository\Stock\SupplierRepository;
+use App\Service\Company\CompanyService;
 use App\Service\LogEntryService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -18,19 +19,26 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Supplier')]
 #[Route('/supplier')]
 final class SupplierController extends AbstractController
-
 {
     private LogEntryService $logEntryService;
-    public function __construct(private Security $security, LogEntryService $logEntryService)
-    {
+    private CompanyService $companyService;
+
+    public function __construct(
+        private Security $security,
+        LogEntryService $logEntryService,
+        CompanyService $companyService
+    ) {
         $this->logEntryService = $logEntryService;
+        $this->companyService = $companyService;
     }
-    
+
+    // ─── LIST: retrieve all suppliers of the current company ─────────────────────
     #[Route('/list', name: 'app_supplier_display', methods: ['GET'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
     #[OA\Get(
         path: "/api/v1/supplier/list",
         summary: "List all suppliers",
-        description: "Returns a list of all suppliers",
+        description: "Returns all suppliers belonging to the current company",
         responses: [
             new OA\Response(
                 response: 200,
@@ -40,11 +48,12 @@ final class SupplierController extends AbstractController
                     items: new OA\Items(
                         type: "object",
                         properties: [
-                            new OA\Property(property: "id", type: "integer", example: 1),
-                            new OA\Property(property: "name", type: "string", example: "Supplier A"),
-                            new OA\Property(property: "email", type: "string", example: "supplierA@email.com"),
-                            new OA\Property(property: "city", type: "string", example: "Paris"),
-                            new OA\Property(property: "phone", type: "string", example: "+33123456789"),
+                            new OA\Property(property: "id",      type: "integer", example: 1),
+                            new OA\Property(property: "name",    type: "string",  example: "Supplier A"),
+                            new OA\Property(property: "email",   type: "string",  example: "supplierA@email.com"),
+                            new OA\Property(property: "city",    type: "string",  example: "Paris"),
+                            new OA\Property(property: "phone",   type: "string",  example: "+33123456789"),
+                            new OA\Property(property: "company", type: "string",  example: "Acme Corp"),
                         ]
                     )
                 )
@@ -60,26 +69,34 @@ final class SupplierController extends AbstractController
     )]
     public function list(SupplierRepository $supplierRepository): JsonResponse
     {
-        $suppliers=$supplierRepository->findAll();
+        // Automatically retrieve the current company of the authenticated user
+        $company = $this->companyService->getCurrentCompany();
+        if (!$company) {
+            return $this->json(['error' => 'No company assigned to the authenticated user'], Response::HTTP_NOT_FOUND);
+        }
 
+        // Filter suppliers by the current company only — not findAll()
+        $suppliers = $supplierRepository->findBy(['company' => $company]);
         if (!$suppliers) {
             return $this->json(['Status' => 'No suppliers found'], Response::HTTP_NOT_FOUND);
         }
 
-        $data=[];
-        foreach($suppliers as $supplier){
-           $data[] = [
-                'id' => $supplier->getId(),
-                'name' => $supplier->getName(),
-                'email' => $supplier->getEmail(),
-                'city' => $supplier->getCity(),
-                'phone' => $supplier->getPhone(),
+        $data = [];
+        foreach ($suppliers as $supplier) {
+            $data[] = [
+                'id'      => $supplier->getId(),
+                'name'    => $supplier->getName(),
+                'email'   => $supplier->getEmail(),
+                'city'    => $supplier->getCity(),
+                'phone'   => $supplier->getPhone(),
+                'company' => $supplier->getCompany()?->getNameComp(),
             ];
-        }       
+        }
+
         return $this->json($data, Response::HTTP_OK);
     }
 
-
+    // ─── SEARCH: search suppliers by name ───────────────────────────────────────
     #[Route('/search/{sname}', name: 'app_supplier_search', methods: ['GET'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
     #[OA\Get(
@@ -103,13 +120,12 @@ final class SupplierController extends AbstractController
                     items: new OA\Items(
                         type: "object",
                         properties: [
-                            new OA\Property(property: "id", type: "integer", example: 1),
-                            new OA\Property(property: "name", type: "string", example: "Supplier A"),
-                            new OA\Property(property: "email", type: "string", example: "supplierA@email.com"),
-                            new OA\Property(property: "city", type: "string", example: "Paris"),
-                            new OA\Property(property: "phone", type: "string", example: "+33123456789"),
-                            new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z"),
-                            new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z") 
+                            new OA\Property(property: "id",      type: "integer", example: 1),
+                            new OA\Property(property: "name",    type: "string",  example: "Supplier A"),
+                            new OA\Property(property: "email",   type: "string",  example: "supplierA@email.com"),
+                            new OA\Property(property: "city",    type: "string",  example: "Paris"),
+                            new OA\Property(property: "phone",   type: "string",  example: "+33123456789"),
+                            new OA\Property(property: "company", type: "string",  example: "Acme Corp"),
                         ]
                     )
                 )
@@ -129,33 +145,37 @@ final class SupplierController extends AbstractController
         if (!$suppliers) {
             return $this->json(['error' => 'Supplier not found'], Response::HTTP_NOT_FOUND);
         }
-        // Return the found suppliers
-                $data = [];
+
+        $data = [];
         foreach ($suppliers as $supplier) {
             $data[] = [
-                'id' => $supplier->getId(),
-                'name' => $supplier->getName(),
-                'email' => $supplier->getEmail(),
-                'city' => $supplier->getCity(),
-                'phone' => $supplier->getPhone(),
+                'id'      => $supplier->getId(),
+                'name'    => $supplier->getName(),
+                'email'   => $supplier->getEmail(),
+                'city'    => $supplier->getCity(),
+                'phone'   => $supplier->getPhone(),
+                'company' => $supplier->getCompany()?->getNameComp(),
             ];
-        }       
-        return $this->json($data, Response::HTTP_OK);
-}
+        }
 
+        return $this->json($data, Response::HTTP_OK);
+    }
+
+    // ─── CREATE: create a new supplier and assign it to the current company ──────
     #[Route('/create', name: 'app_supplier_create', methods: ['POST'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
     #[OA\Post(
         path: "/api/v1/supplier/create",
         summary: "Create a new supplier",
+        description: "Creates a new supplier and automatically assigns it to the current company",
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
                 type: "object",
                 properties: [
-                    new OA\Property(property: "name", type: "string", example: "Supplier A"),
+                    new OA\Property(property: "name",  type: "string", example: "Supplier A"),
                     new OA\Property(property: "email", type: "string", example: "supplierA@email.com"),
-                    new OA\Property(property: "city", type: "string", example: "Paris"),
+                    new OA\Property(property: "city",  type: "string", example: "Paris"),
                     new OA\Property(property: "phone", type: "string", example: "+33123456789"),
                 ]
             )
@@ -166,13 +186,12 @@ final class SupplierController extends AbstractController
                 description: "Supplier created successfully",
                 content: new OA\JsonContent(
                     properties: [
-                        new OA\Property(property: "id", type: "integer", example: 1),
-                        new OA\Property(property: "name", type: "string", example: "Supplier A"),
-                        new OA\Property(property: "email", type: "string", example: "supplierA@email.com"),
-                        new OA\Property(property: "city", type: "string", example: "Paris"),
-                        new OA\Property(property: "phone", type: "string", example: "+33123456789"),
-                        new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z"),
-                        new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z") 
+                        new OA\Property(property: "id",      type: "integer", example: 1),
+                        new OA\Property(property: "name",    type: "string",  example: "Supplier A"),
+                        new OA\Property(property: "email",   type: "string",  example: "supplierA@email.com"),
+                        new OA\Property(property: "city",    type: "string",  example: "Paris"),
+                        new OA\Property(property: "phone",   type: "string",  example: "+33123456789"),
+                        new OA\Property(property: "company", type: "string",  example: "Acme Corp"),
                     ]
                 )
             ),
@@ -185,29 +204,46 @@ final class SupplierController extends AbstractController
             )
         ]
     )]
-
     public function create(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-     $required=['name','email','city','phone'];
-        foreach($required as $field){
-            if(empty($data[$field]) || !isset($data[$field])){
-                return $this->json(['error'=>"The field $field is required"],Response::HTTP_BAD_REQUEST);
+
+        $required = ['name', 'email', 'city', 'phone'];
+        foreach ($required as $field) {
+            if (empty($data[$field]) || !isset($data[$field])) {
+                return $this->json(['error' => "The field $field is required"], Response::HTTP_BAD_REQUEST);
             }
         }
+
+        // Automatically retrieve the current company of the authenticated user
+        $company = $this->companyService->getCurrentCompany();
+        if (!$company) {
+            return $this->json(['error' => 'No company assigned to the authenticated user'], Response::HTTP_NOT_FOUND);
+        }
+
         $supplier = new Supplier();
         $supplier->setName($data['name']);
         $supplier->setEmail($data['email']);
         $supplier->setCity($data['city']);
         $supplier->setPhone($data['phone']);
-        
+        $supplier->setCompany($company); // ← automatically assigned from the current session
+
         $em->persist($supplier);
         $em->flush();
-        // Log the creation of the supplier
+
         $this->logEntryService->createLogEntry('Supplier created: ' . $supplier->getName());
-        return $this->json(['message' => 'Supplier created successfully'], Response::HTTP_CREATED);
+
+        return $this->json([
+            'id'      => $supplier->getId(),
+            'name'    => $supplier->getName(),
+            'email'   => $supplier->getEmail(),
+            'city'    => $supplier->getCity(),
+            'phone'   => $supplier->getPhone(),
+            'company' => $company->getNameComp(),
+        ], Response::HTTP_CREATED);
     }
 
+    // ─── UPDATE: update an existing supplier ────────────────────────────────────
     #[Route('/modify/{id}', name: 'app_supplier_update', methods: ['PUT'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
     #[OA\Put(
@@ -226,10 +262,10 @@ final class SupplierController extends AbstractController
             required: true,
             content: new OA\JsonContent(
                 properties: [
-                    new OA\Property(property: "name", type: "string", example: "Updated Supplier"),
+                    new OA\Property(property: "name",  type: "string", example: "Updated Supplier"),
                     new OA\Property(property: "email", type: "string", example: "updated@email.com"),
-                    new OA\Property(property: "city", type: "string", example: "Lyon"),
-                    new OA\Property(property: "phone", type: "string", example: "+33498765432")
+                    new OA\Property(property: "city",  type: "string", example: "Lyon"),
+                    new OA\Property(property: "phone", type: "string", example: "+33498765432"),
                 ]
             )
         ),
@@ -238,15 +274,7 @@ final class SupplierController extends AbstractController
                 response: 200,
                 description: "Supplier updated successfully",
                 content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "id", type: "integer", example: 1),
-                        new OA\Property(property: "name", type: "string", example: "Updated Supplier"),
-                        new OA\Property(property: "email", type: "string", example: "updated@email.com"),
-                        new OA\Property(property: "city", type: "string", example: "Lyon"),
-                        new OA\Property(property: "phone", type: "string", example: "+33498765432"),
-                        new OA\Property(property: "date_createAt", type: "string", example: "2023-10-01T12:00:00Z"),
-                        new OA\Property(property: "date_updateAt", type: "string", example: "2023-10-01T12:00:00Z")                    ]
-
+                    properties: [new OA\Property(property: "message", type: "string", example: "Supplier updated successfully")]
                 )
             ),
             new OA\Response(
@@ -262,26 +290,19 @@ final class SupplierController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        $required=['name','email','city','phone'];
-        foreach($required as $field){
-            if(empty($data[$field]) || !isset($data[$field])){
-                return $this->json(['e rror'=>"The field $field is required"],Response::HTTP_BAD_REQUEST);
-            }
-        }
-
-        $supplier->setName($data['name'] ?? $supplier->getName());
+        $supplier->setName($data['name']   ?? $supplier->getName());
         $supplier->setEmail($data['email'] ?? $supplier->getEmail());
-        $supplier->setCity($data['city'] ?? $supplier->getCity());
+        $supplier->setCity($data['city']   ?? $supplier->getCity());
         $supplier->setPhone($data['phone'] ?? $supplier->getPhone());
 
         $em->flush();
 
-        // Log the update of the supplier
         $this->logEntryService->createLogEntry('Supplier updated: ' . $supplier->getName());
+
         return $this->json(['message' => 'Supplier updated successfully'], Response::HTTP_OK);
-    
     }
 
+    // ─── DELETE: remove a supplier by ID ────────────────────────────────────────
     #[Route('/delete/{id}', name: 'app_supplier_delete', methods: ['DELETE'])]
     #[IsGranted(attribute: 'ROLE_MANAGER')]
     #[OA\Delete(
@@ -297,10 +318,7 @@ final class SupplierController extends AbstractController
             )
         ],
         responses: [
-            new OA\Response(
-                response: 204,
-                description: "Supplier deleted successfully"
-            ),
+            new OA\Response(response: 204, description: "Supplier deleted successfully"),
             new OA\Response(
                 response: 404,
                 description: "Supplier not found",
@@ -315,9 +333,8 @@ final class SupplierController extends AbstractController
         $em->remove($supplier);
         $em->flush();
 
-        // Log the deletion of the supplier
         $this->logEntryService->createLogEntry('Supplier deleted: ' . $supplier->getName());
-        return $this->json(['message' => 'Supplier deleted successfully'], Response::HTTP_NO_CONTENT);
-    }
 
+        return $this->json(null, Response::HTTP_NO_CONTENT);
+    }
 }
