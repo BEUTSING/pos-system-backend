@@ -23,7 +23,7 @@ final class ProductController extends AbstractController
      }
 
     #[Route('/product/search/{pname}', name: 'app_product_search', methods: ['GET'])]
-    #[IsGranted(attribute: 'ROLE_MANAGER')]
+    #[IsGranted(attribute: 'ROLE_WAITER')]
    #[OA\Get(
         path: "/api/v1/product/search/{pname}",
         summary: "Search for a product by name",
@@ -79,7 +79,7 @@ final class ProductController extends AbstractController
 
 
     #[Route('/product/list', name: 'app_product_display', methods: ['GET'])]
-    #[IsGranted(attribute: 'ROLE_MANAGER')]
+    #[IsGranted(attribute: 'ROLE_WAITER')]
     #[OA\Get(
             path: "/api/v1/product/list",
             summary: "List all products",
