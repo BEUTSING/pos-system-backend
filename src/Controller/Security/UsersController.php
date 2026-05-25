@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\SecurityController;
+namespace App\Controller\Security;
 
 use App\Service\Security\UsersSercice;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -14,7 +14,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[OA\Tag(name: 'Users')]
 final class UsersController extends AbstractController
 {
-    private $UsersSercice;
+    private UsersSercice $UsersSercice;
 
     public function __construct(UsersSercice $UsersSercice)
     {
@@ -23,7 +23,7 @@ final class UsersController extends AbstractController
 
     // ─── CREATE: create a new user and assign them to the current company ────────
     #[Route('/user/create', name: 'app_user_create', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_MANAGER')]
     #[OA\Post(
         path: '/api/v1/user/create',
         summary: 'User creation',
@@ -95,7 +95,7 @@ final class UsersController extends AbstractController
 
     // ─── LIST: retrieve all users of the current company ─────────────────────────
     #[Route('/user/list', name: 'app_user_list', methods: ['GET'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_MANAGER')]
     #[OA\Get(
         path: '/api/v1/user/list',
         summary: 'List all users of the current company',
@@ -142,7 +142,7 @@ final class UsersController extends AbstractController
 
     // ─── UPDATE: update an existing user's information ──────────────────────────
     #[Route('/user/modify/{id}', name: 'app_user_modify', methods: ['PUT'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_MANAGER')]
     #[OA\Put(
         path: '/api/v1/user/modify/{id}',  // ← fixed: {id} added
         summary: 'Update user information',
@@ -216,7 +216,7 @@ final class UsersController extends AbstractController
 
     // ─── DELETE: remove a user by ID ────────────────────────────────────────────
     #[Route('/user/delete/{id}', name: 'app_user_delete', methods: ['DELETE'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_MANAGER')]
     #[OA\Delete(
         path: '/api/v1/user/delete/{id}',
         summary: 'Delete a user by ID',

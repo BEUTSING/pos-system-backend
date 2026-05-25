@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\SecurityController;
+namespace App\Controller\Security;
 
 use App\Service\Security\RegisterService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class RegisterController extends AbstractController
 {
     
-    private $registerService;
+    private RegisterService $registerService;
     public function __construct( RegisterService $registerService){
         $this->registerService = $registerService;
         
@@ -49,7 +49,11 @@ final class RegisterController extends AbstractController
                     new OA\Property(property: "city", type: "string", example: "New York"),
                     new OA\Property(property: "color", type: "string", example: "blue"),
                     new OA\Property(property: "email", type: "string", example: "beutsing@gmail.com"),
-                    new OA\Property(property: "password", type: "string", example: "bk123")
+                    new OA\Property(
+                            property: "roles",
+                            type: "array",
+                            items: new OA\Items(type: "string", example: "ROLE_ADMIN") // ← fixed: items added
+                        ),                    new OA\Property(property: "password", type: "string", example: "bk123")
                     ]
                 )
             ),

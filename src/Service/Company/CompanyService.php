@@ -44,7 +44,7 @@ class CompanyService
         }
 
   //      if the user is an owner, return the company they own      
-        if (in_array('ROLE_OWNER', $user->getRoles())) {
+        if (in_array('ROLE_ADMIN', $user->getRoles())) {
 
             return $this->companyRepository->findOneBy([
                 'owner' => $user
@@ -118,10 +118,6 @@ class CompanyService
         $this->em->persist($company);
         $this->em->flush();
 
-        $this->logEntryService->createLogEntry(
-            'Company created: ' . $company->getNameComp() . ' by ' . $user->getUserIdentifier()
-        );
-
         return [$this->formatCompany($company)];
     }
 
@@ -161,10 +157,6 @@ class CompanyService
         }
 
         $this->em->flush();
-
-        $this->logEntryService->createLogEntry(
-            'Company updated: ' . $company->getNameComp() . ' by ' . $user->getUserIdentifier()
-        );
 
         return ['message' => 'Company updated successfully'];
     }

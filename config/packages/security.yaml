@@ -60,7 +60,7 @@ security:
         - { path: ^/stock_movement,  roles: ROLE_MANAGER }                
         
         # Routes user
-        - { path:  ^/user/modify,  roles: ROLE_ADMIN}
+        - { path:  ^/api/v1/company,  roles: ROLE_ADMIN}
         
         # Routes category
         - { path: ^/category,  roles: ROLE_MANAGER}

@@ -48,6 +48,7 @@ class RegisterService
         $user->setCity($data['city']);
         $user->setColor($data['color']);
         $user->setEmail($data['email']);
+        $user->setRoles(['ROLE_ADMIN']);
         $user->setPassword($this->passwordHasher->hashPassword($user, $data['password']));
 
        $this->em->persist($user);
