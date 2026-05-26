@@ -5,7 +5,7 @@ namespace App\Controller\Product;
 use App\Entity\Product\Category;
 use App\Repository\Product\CategoryRepository;
 use App\Service\Company\CompanyService;
-use App\Service\LogEntryService;
+
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -20,17 +20,14 @@ use RuntimeException;
 #[OA\Tag(name: 'Category')]
 final class CategoryController extends AbstractController
 {
-    private LogEntryService $logEntryService;
-    private CompanyService $companyService;
+   private CompanyService $companyService;
     private CategoryRepository $categoryRepository;
 
     public function __construct(
         private Security $security,
-        LogEntryService $logEntryService,
         CompanyService $companyService,
         CategoryRepository $categoryRepository
     ) {
-        $this->logEntryService = $logEntryService;
         $this->security = $security;
         $this->companyService = $companyService;
         $this->categoryRepository = $categoryRepository;
@@ -234,9 +231,9 @@ final class CategoryController extends AbstractController
         $emi->persist($categorie);
         $emi->flush();
 
-        $this->logEntryService->createLogEntry(
-            'Category created: ' . $categorie->getCategoryname() . ' by ' . $user->getUserIdentifier()
-        );
+        // $this->logEntryService->createLogEntry(
+        //     'Category created: ' . $categorie->getCategoryname() . ' by ' . $user->getUserIdentifier()
+        // );
 
         return $this->json([
             'id'           => $categorie->getId(),
@@ -300,7 +297,7 @@ final class CategoryController extends AbstractController
 
         $emi->flush();
 
-        $this->logEntryService->createLogEntry('Category updated: ' . $categorie->getCategoryname());
+        // $this->logEntryService->createLogEntry('Category updated: ' . $categorie->getCategoryname());
 
         return $this->json(['message' => 'Category updated successfully'], Response::HTTP_OK);
     }
@@ -337,7 +334,7 @@ final class CategoryController extends AbstractController
         $emi->remove($categorie);
         $emi->flush();
 
-        $this->logEntryService->createLogEntry('Category deleted: ' . $categorie->getCategoryname());
+        // $this->logEntryService->createLogEntry('Category deleted: ' . $categorie->getCategoryname());
 
         return $this->json(null, Response::HTTP_NO_CONTENT);
     }

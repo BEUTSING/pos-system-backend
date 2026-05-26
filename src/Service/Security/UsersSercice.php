@@ -6,7 +6,7 @@ use App\Entity\Security\User;
 use App\Enum\RoleUser;
 use App\Repository\Security\UserRepository;
 use App\Service\Company\CompanyService;
-use App\Service\LogEntryService;
+
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -16,12 +16,10 @@ class UsersSercice
     private $em;
     private $passwordHasher;
     private $userrepo;
-    private $logEntryService;
     private $companyService;    
 
     public function __construct(
         EntityManagerInterface $em,
-        LogEntryService $logEntryService,
         UserPasswordHasherInterface $passwordHasher,
         UserRepository $userrepo,
         CompanyService $companyService
@@ -29,7 +27,6 @@ class UsersSercice
         $this->em = $em;
         $this->passwordHasher = $passwordHasher;
         $this->userrepo = $userrepo;
-        $this->logEntryService = $logEntryService;
         $this->companyService = $companyService;
     }
 
@@ -58,11 +55,11 @@ class UsersSercice
         }
 
         // Automatically retrieve the current company of the authenticated admin
-        $company = $this->companyService->getcurrentCompany();
+        $company = $this->companyService->getCurrentCompany();
         if (!$company) {
             throw new \RuntimeException('No company assigned to the authenticated user');
         }
-
+         dd($company);
         // Create user
         $user = new User();
         $user->setName($data['name']);
@@ -90,7 +87,6 @@ class UsersSercice
         $this->em->persist($user);
         $this->em->flush();
 
-        $this->logEntryService->createLogEntry('User created: ' . $user->getName());
 
         return [
             'id'      => $user->getId(),
@@ -108,7 +104,7 @@ class UsersSercice
     public function listUsers(): array
     {
         // Automatically retrieve the current company of the authenticated admin
-        $company = $this->companyService->getcurrentCompany();
+        $company = $this->companyService->getCurrentCompany();
         if (!$company) {
             throw new \RuntimeException('No company assigned to the authenticated user');
         }
@@ -178,7 +174,6 @@ class UsersSercice
 
         $this->em->flush();
 
-        $this->logEntryService->createLogEntry('User updated: ' . $user->getName());
 
         return ['status' => 'User updated successfully'];
     }
@@ -194,7 +189,6 @@ class UsersSercice
         $this->em->remove($user);
         $this->em->flush();
 
-        $this->logEntryService->createLogEntry('User deleted: ' . $user->getName());
 
         return ['message' => 'User deleted successfully'];
     }

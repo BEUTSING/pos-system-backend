@@ -5,7 +5,7 @@ namespace App\Service\Company;
 use App\Entity\Company\Company;
 use App\Entity\Security\User;
 use App\Repository\Company\CompanyRepository;
-use App\Service\LogEntryService;
+
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -15,16 +15,13 @@ class CompanyService
 {
     private EntityManagerInterface $em;
     private CompanyRepository $companyRepository;
-    private LogEntryService $logEntryService;
     private Security $security;
 
     public function __construct(
-        LogEntryService $logEntryService,
         EntityManagerInterface $em,
         CompanyRepository $companyRepository,
         Security $security
     ) {
-        $this->logEntryService = $logEntryService;
         $this->em = $em;
         $this->companyRepository = $companyRepository;
         $this->security = $security;
@@ -179,10 +176,6 @@ class CompanyService
         $name = $company->getNameComp();
         $this->em->remove($company);
         $this->em->flush();
-
-        $this->logEntryService->createLogEntry(
-            'Company deleted: ' . $name . ' by ' . $user->getUserIdentifier()
-        );
 
         return 'Company deleted successfully';
     }

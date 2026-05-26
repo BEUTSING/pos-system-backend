@@ -6,7 +6,7 @@ use App\Repository\Product\CategoryRepository;
 use App\Repository\Product\ProductRepository;
 use App\Repository\Stock\SupplierRepository;
 use App\Service\Company\CompanyService;
-use App\Service\LogEntryService;
+
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -23,7 +23,6 @@ class ProductService
     private $companyService;
 
     public function __construct(
-        LogEntryService $logEntryService,
         EntityManagerInterface $em,
         CategoryRepository $categoryrepository,
         SupplierRepository $supplierrepository,
@@ -32,7 +31,6 @@ class ProductService
         CompanyService $companyService  // ← injected
     ) {
         $this->security = $security;
-        $this->logEntryService = $logEntryService;
         $this->ProductRepository = $repo;
         $this->em = $em;
         $this->categoryrepository = $categoryrepository;
@@ -60,7 +58,7 @@ class ProductService
     public function listP(): array
     {
         // Automatically retrieve the current company of the authenticated user
-        $company = $this->companyService->getcurrentCompany();
+        $company = $this->companyService->getCurrentCompany();
         if (!$company) {
             throw new RuntimeException('No company assigned to the authenticated user');
         }
@@ -85,7 +83,7 @@ class ProductService
         $data = json_decode($request->getContent(), true);
 
         // Automatically retrieve the current company of the authenticated user
-        $company = $this->companyService->getcurrentCompany();
+        $company = $this->companyService->getCurrentCompany();
         if (!$company) {
             throw new RuntimeException('No company assigned to the authenticated user');
         }
@@ -118,9 +116,7 @@ class ProductService
         $this->em->persist($product);
         $this->em->flush();
 
-        $this->logEntryService->createLogEntry(
-            'Product created: ' . $product->getProductname() . ' in company: ' . $company->getNameComp()
-        );
+         
 
         return [[
             'id'            => $product->getId(),

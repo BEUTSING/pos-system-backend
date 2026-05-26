@@ -7,7 +7,7 @@ use App\Entity\Stock\Stockmovement;
 use App\Repository\Product\ProductRepository;
 use App\Repository\Stock\StockmovementRepository;
 use App\Service\Company\CompanyService;
-use App\Service\LogEntryService;
+
 use App\Enum\ReasonMovement;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -23,15 +23,13 @@ use OpenApi\Attributes as OA;
 #[Route('/stock-movement')]
 final class StockmovementController extends AbstractController
 {
-    private LogEntryService $logEntryService;
+
     private CompanyService $companyService;
 
     public function __construct(
         private Security $security,
-        LogEntryService $logEntryService,
         CompanyService $companyService
     ) {
-        $this->logEntryService = $logEntryService;
         $this->companyService = $companyService;
     }
 
@@ -384,11 +382,11 @@ final class StockmovementController extends AbstractController
         $em->persist($product);
         $em->flush();
 
-        $this->logEntryService->createLogEntry(
-            'Stock movement created for product: ' . $product->getProductname() .
-            ' with quantity: ' . $movement->getQuantity() .
-            ' and of type ' . $movement->getTypemovement()
-        );
+        // $this->logEntryService->createLogEntry(
+        //     'Stock movement created for product: ' . $product->getProductname() .
+        //     ' with quantity: ' . $movement->getQuantity() .
+        //     ' and of type ' . $movement->getTypemovement()
+        // );
 
         return $this->json([
             'id'           => $movement->getId(),
@@ -481,9 +479,9 @@ final class StockmovementController extends AbstractController
 
         $em->flush();
 
-        $this->logEntryService->createLogEntry(
-            'Stock movement updated for product: ' . $movement->getProduct()->getProductname()
-        );
+        // $this->logEntryService->createLogEntry(
+        //     'Stock movement updated for product: ' . $movement->getProduct()->getProductname()
+        // );
 
         return $this->json(['message' => 'Stock movement updated successfully'], Response::HTTP_OK);
     }
@@ -517,9 +515,9 @@ final class StockmovementController extends AbstractController
     public function delete(Stockmovement $movement, EntityManagerInterface $em): JsonResponse
     {
         // ← fixed: removed Product $product from params — not needed, get it from movement
-        $this->logEntryService->createLogEntry(
-            'Stock movement deleted for product: ' . $movement->getProduct()->getProductname()
-        );
+        // $this->logEntryService->createLogEntry(
+        //     'Stock movement deleted for product: ' . $movement->getProduct()->getProductname()
+        // );
 
         $em->remove($movement);
         $em->flush();

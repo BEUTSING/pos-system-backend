@@ -4,7 +4,7 @@ namespace App\Service\Security;
 
 use App\Entity\Security\User;
 use App\Repository\Security\UserRepository;
-use App\Service\LogEntryService;
+
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -14,14 +14,12 @@ class RegisterService
     private $em;
     private $passwordHasher;
     private $userrepo;
-    private $logEntryService;
-    public function __construct(EntityManagerInterface $em,LogEntryService $logEntryService,
+    public function __construct(EntityManagerInterface $em,
                                  UserPasswordHasherInterface $passwordHasher,UserRepository $userrepo)
     {
         $this->em=$em;
         $this->passwordHasher=$passwordHasher;
         $this->userrepo=$userrepo;
-        $this->logEntryService=$logEntryService;
     }
 
     // create a Compte

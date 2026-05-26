@@ -5,7 +5,7 @@ namespace App\Controller\Stock;
 use App\Entity\Stock\Supplier;
 use App\Repository\Stock\SupplierRepository;
 use App\Service\Company\CompanyService;
-use App\Service\LogEntryService;
+
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -20,15 +20,13 @@ use OpenApi\Attributes as OA;
 #[Route('/supplier')]
 final class SupplierController extends AbstractController
 {
-    private LogEntryService $logEntryService;
+    
     private CompanyService $companyService;
 
     public function __construct(
         private Security $security,
-        LogEntryService $logEntryService,
         CompanyService $companyService
     ) {
-        $this->logEntryService = $logEntryService;
         $this->companyService = $companyService;
     }
 
@@ -231,7 +229,7 @@ final class SupplierController extends AbstractController
         $em->persist($supplier);
         $em->flush();
 
-        $this->logEntryService->createLogEntry('Supplier created: ' . $supplier->getName());
+        // $this->logEntryService->createLogEntry('Supplier created: ' . $supplier->getName());
 
         return $this->json([
             'id'      => $supplier->getId(),
@@ -297,7 +295,7 @@ final class SupplierController extends AbstractController
 
         $em->flush();
 
-        $this->logEntryService->createLogEntry('Supplier updated: ' . $supplier->getName());
+        // $this->logEntryService->createLogEntry('Supplier updated: ' . $supplier->getName());
 
         return $this->json(['message' => 'Supplier updated successfully'], Response::HTTP_OK);
     }
@@ -333,7 +331,7 @@ final class SupplierController extends AbstractController
         $em->remove($supplier);
         $em->flush();
 
-        $this->logEntryService->createLogEntry('Supplier deleted: ' . $supplier->getName());
+        // $this->logEntryService->createLogEntry('Supplier deleted: ' . $supplier->getName());
 
         return $this->json(null, Response::HTTP_NO_CONTENT);
     }
