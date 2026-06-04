@@ -1,4 +1,11 @@
 <?php
+// ─────────────────────────────────────────────────────────────────────────────
+// FILE: UsersSercice.php
+// CORRECTIONS:
+//   1. REMOVED dd($company) — this was blocking all user creation (500 error)
+//   2. User is now assigned to the ACTIVE company (from X-Company-Id header)
+//      not just the first company found for this admin
+// ─────────────────────────────────────────────────────────────────────────────
 
 namespace App\Service\Security;
 
@@ -16,21 +23,28 @@ class UsersSercice
     private $em;
     private $passwordHasher;
     private $userrepo;
-    private $companyService;    
+    private $companyService;
 
     public function __construct(
-        EntityManagerInterface $em,
+        EntityManagerInterface      $em,
         UserPasswordHasherInterface $passwordHasher,
-        UserRepository $userrepo,
-        CompanyService $companyService
+        UserRepository              $userrepo,
+        CompanyService              $companyService
     ) {
-        $this->em = $em;
+        $this->em             = $em;
         $this->passwordHasher = $passwordHasher;
-        $this->userrepo = $userrepo;
+        $this->userrepo       = $userrepo;
         $this->companyService = $companyService;
     }
 
-    // Create user and automatically assign them to the current company
+    // ─────────────────────────────────────────────────────────────────────────
+    // createUsers — create a new user and assign them to the ACTIVE company
+    //
+    // The active company is determined by CompanyService::getCurrentCompany()
+    // which reads the X-Company-Id header sent by Flutter.
+    // This means if the admin has 2 restaurants and activated "chez-bk",
+    // the new user will be assigned to "chez-bk" automatically.
+    // ─────────────────────────────────────────────────────────────────────────
     public function createUsers(Request $request): array
     {
         $data = json_decode($request->getContent(), true);
@@ -54,13 +68,18 @@ class UsersSercice
             throw new \RuntimeException('This user already exists');
         }
 
-        // Automatically retrieve the current company of the authenticated admin
+        // Get the ACTIVE company from X-Company-Id header (sent by Flutter)
+        // CompanyService reads the header and verifies ownership
         $company = $this->companyService->getCurrentCompany();
         if (!$company) {
-            throw new \RuntimeException('No company assigned to the authenticated user');
+            throw new \RuntimeException(
+                'No active company found. Please activate a restaurant first.'
+            );
         }
-         dd($company);
-        // Create user
+
+        // ── REMOVED: dd($company) was here — it was causing 500 errors ──────
+
+        // Create the new user
         $user = new User();
         $user->setName($data['name']);
         $user->setPhone($data['phone']);
@@ -74,19 +93,25 @@ class UsersSercice
             foreach ($data['role'] as $r) {
                 if (!in_array($r, $allowedRoles)) {
                     throw new \InvalidArgumentException(
-                        'Invalid role: ' . $r . '. Allowed roles: ' . implode(', ', $allowedRoles)
+                        'Invalid role: ' . $r . '. Allowed: ' . implode(', ', $allowedRoles)
                     );
                 }
             }
             $user->setRoles($data['role']);
         }
 
-        $user->setCompany($company); // ← automatically assigned from the current session
-        $user->setPassword($this->passwordHasher->hashPassword($user, $data['password']));
+        // Assign the user to the ACTIVE company
+        // This is the key fix: user gets the company that is currently active
+        // in Flutter (the one the admin double-clicked on in company_page)
+        $user->setCompany($company);
+
+        // Hash the password before storing
+        $user->setPassword(
+            $this->passwordHasher->hashPassword($user, $data['password'])
+        );
 
         $this->em->persist($user);
         $this->em->flush();
-
 
         return [
             'id'      => $user->getId(),
@@ -96,20 +121,23 @@ class UsersSercice
             'color'   => $user->getColor(),
             'email'   => $user->getEmail(),
             'roles'   => $user->getRoles(),
+            // Return the company name so Flutter can confirm it
             'company' => $user->getCompany()?->getNameComp(),
         ];
     }
 
-    // List only users belonging to the current company
+    // ─────────────────────────────────────────────────────────────────────────
+    // listUsers — return only users belonging to the ACTIVE company
+    // ─────────────────────────────────────────────────────────────────────────
     public function listUsers(): array
     {
-        // Automatically retrieve the current company of the authenticated admin
+        // Get the active company from X-Company-Id header
         $company = $this->companyService->getCurrentCompany();
         if (!$company) {
-            throw new \RuntimeException('No company assigned to the authenticated user');
+            throw new \RuntimeException('No active company found');
         }
 
-        // Filter users by the current company only — not findAll()
+        // Filter by active company only — not findAll()
         $users = $this->userrepo->findBy(['company' => $company]);
 
         $data = [];
@@ -128,7 +156,9 @@ class UsersSercice
         return $data;
     }
 
-    // Update user
+    // ─────────────────────────────────────────────────────────────────────────
+    // updateUsers — update an existing user
+    // ─────────────────────────────────────────────────────────────────────────
     public function updateUsers(Request $request, int $id): array
     {
         $user = $this->userrepo->find($id);
@@ -138,7 +168,6 @@ class UsersSercice
 
         $data = json_decode($request->getContent(), true);
 
-        // Validate email if provided
         if (isset($data['email'])) {
             if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
                 throw new \InvalidArgumentException('The email is not valid');
@@ -155,13 +184,12 @@ class UsersSercice
         if (isset($data['city']))  $user->setCity($data['city']);
         if (isset($data['color'])) $user->setColor($data['color']);
 
-        // Validate and update roles if provided
         if (isset($data['role'])) {
             $allowedRoles = array_column(RoleUser::cases(), 'value');
             foreach ($data['role'] as $r) {
                 if (!in_array($r, $allowedRoles)) {
                     throw new \InvalidArgumentException(
-                        'Invalid role: ' . $r . '. Allowed roles: ' . implode(', ', $allowedRoles)
+                        'Invalid role: ' . $r . '. Allowed: ' . implode(', ', $allowedRoles)
                     );
                 }
             }
@@ -169,16 +197,19 @@ class UsersSercice
         }
 
         if (isset($data['password'])) {
-            $user->setPassword($this->passwordHasher->hashPassword($user, $data['password']));
+            $user->setPassword(
+                $this->passwordHasher->hashPassword($user, $data['password'])
+            );
         }
 
         $this->em->flush();
 
-
         return ['status' => 'User updated successfully'];
     }
 
-    // Delete user
+    // ─────────────────────────────────────────────────────────────────────────
+    // deleteUsers — permanently remove a user
+    // ─────────────────────────────────────────────────────────────────────────
     public function deleteUsers(int $id): array
     {
         $user = $this->userrepo->find($id);
@@ -188,7 +219,6 @@ class UsersSercice
 
         $this->em->remove($user);
         $this->em->flush();
-
 
         return ['message' => 'User deleted successfully'];
     }
