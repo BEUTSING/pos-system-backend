@@ -122,6 +122,7 @@ class CheckoutService
             $orderItem->setProduct($product);
             $orderItem->setQuantity($item['quantity']);
             $orderItem->setPrice($product->getSaleprice());
+            $orderItem->setCompany($company);  // ← Add company to OrderItem
 
             $this->entityManager->persist($orderItem);
             $customerOrder->addOrderItem($orderItem);
@@ -215,6 +216,8 @@ class CheckoutService
         $sale->setCustomerOrder($customerOrder);
         $sale->setPaymentMethod($data['paymentMethod']);
         $sale->setIsPaid(false);
+        // Assign company from the order (inherited from active company)
+        $sale->setCompany($customerOrder->getCompany());
 
         $this->entityManager->persist($sale);
         $this->entityManager->flush();
