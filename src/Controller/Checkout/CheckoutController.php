@@ -3,12 +3,13 @@
 namespace App\Controller\Checkout;
 
 use App\Service\Checkout\CheckoutService;
+use OpenApi\Attributes as OA; 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use OpenApi\Attributes as OA; 
 
 #[OA\Tag(name: 'Chockout')]
 #[Route('/checkout')]  
@@ -358,6 +359,42 @@ final class CheckoutController extends AbstractController
         "error" => $e->getMessage()
       ], 400);
     } 
-  }
-    
-} 
+    }
+ 
+    #[Route('/pending-orders', name: 'app_checkout_pending_orders', methods: ['GET'])]
+    #[IsGranted(attribute: 'ROLE_TELLER')]
+    #[OA\Get(
+        path: '/api/v1/checkout/pending-orders',
+        summary: 'Get pending orders (without sales)',
+        description: 'Returns orders that have not been converted to sales yet',
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'List of pending orders',
+                content: new OA\JsonContent(
+                    type: 'array',
+                    items: new OA\Items(
+                        type: 'object',
+                        properties: [
+                            new OA\Property(property: 'id', type: 'integer', example: 1),
+                            new OA\Property(property: 'waiter', type: 'string', example: 'John Doe'),
+                            new OA\Property(property: 'created_at', type: 'string', example: '2024-01-15 14:30:00'),
+                            new OA\Property(property: 'total_amount', type: 'number', format: 'float', example: 50.5),
+                            new OA\Property(property: 'items_count', type: 'integer', example: 3),
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 404, description: 'No pending orders found')
+        ]
+    )]
+    public function getPendingOrders(CheckoutService $checkoutService): JsonResponse
+    {
+        try {
+            $data = $checkoutService->getPendingOrders();
+            return new JsonResponse($data, Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+        }
+    }
+}

@@ -24,8 +24,9 @@ use App\Repository\Checkout\CancellationRepository;
 use App\Repository\Checkout\CustomerOrderRepository;
 use App\Repository\Checkout\OrderItemRepository;
 use App\Repository\Checkout\SaleRepository;
+use App\Repository\Company\CompanyRepository;
 use App\Repository\Product\ProductRepository;
-use App\Service\Company\CompanyService; // ← ADDED: import CompanyService
+use App\Service\Company\CompanyService;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -40,7 +41,8 @@ class CheckoutService
     private $saleRepo;
     private $orderItemrepo;
     private $cancellationrepo;
-    private $companyService; // ← ADDED: property for CompanyService
+    private $companyService;
+    private $companyRepository; // ← ADDED: property for CompanyService
 
     public function __construct(
         ProductRepository $productRepository,
@@ -50,7 +52,8 @@ class CheckoutService
         CancellationRepository $cancellationrepo,
         SaleRepository $sale_repository,
         OrderItemRepository $orderItemrepo,
-        CompanyService $companyService // ← ADDED: inject CompanyService
+        CompanyService $companyService,
+        CompanyRepository $companyRepository
     ) {
         $this->productRepository  = $productRepository;
         $this->entityManager      = $entityManager;
@@ -59,7 +62,8 @@ class CheckoutService
         $this->saleRepo           = $sale_repository;
         $this->orderItemrepo      = $orderItemrepo;
         $this->cancellationrepo   = $cancellationrepo;
-        $this->companyService     = $companyService; // ← ADDED: assign it
+        $this->companyService     = $companyService;
+        $this->companyRepository  = $companyRepository;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -404,5 +408,56 @@ class CheckoutService
                     ];
                 })->toArray()
         ];
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // getPendingOrders — get orders that don't have a sale yet
+    // ─────────────────────────────────────────────────────────────────────────
+    public function getPendingOrders(): array
+    {
+        $company = $this->companyService->getCurrentCompany();
+        
+        // For admin users: if no active company from header, fallback to first owned company
+        if (!$company) {
+            $user = $this->security->getUser();
+            if ($user && in_array('ROLE_ADMIN', $user->getRoles())) {
+                $company = $this->companyRepository->findOneBy(['owner' => $user]);
+            }
+        }
+        
+        if (!$company) {
+            throw new \Exception('No company assigned to the authenticated user');
+        }
+
+        $companyId = $company->getId();
+
+        // Get all orders for this company that don't have a sale
+        // Also include orders with null company (legacy data)
+        // Use IDENTITY(o.company) to compare by foreign key ID directly
+        $orders = $this->customerorderrepo->createQueryBuilder('o')
+            ->leftJoin('o.sale', 's')
+            ->where('(IDENTITY(o.company) = :companyId OR o.company IS NULL)')
+            ->andWhere('s.id IS NULL')
+            ->setParameter('companyId', $companyId)
+            ->orderBy('o.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        $data = [];
+        foreach ($orders as $order) {
+            $data[] = [
+                'id'          => $order->getId(),
+                'waiter'      => $order->getWaiter()?->getName() ?? 'Serveur',
+                'created_at'  => $order->getCreatedAt()->format('Y-m-d H:i:s'),
+                'total_amount' => $order->getOrderItems()->map(function (OrderItem $item) {
+                    return $item->getPrice() * $item->getQuantity();
+                })->reduce(function ($carry, $item) {
+                    return $carry + $item;
+                }, 0),
+                'items_count' => $order->getOrderItems()->count(),
+            ];
+        }
+
+        return $data;
     }
 }
