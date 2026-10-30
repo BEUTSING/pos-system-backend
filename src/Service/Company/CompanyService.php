@@ -152,20 +152,30 @@ class CompanyService
         $data = json_decode($request->getContent(), true);
 
         $data = is_array($data) ? $data : [];
-        $required = ['nameComp', 'emailComp', 'phone', 'city', 'numEmpl'];
+        // Only the identification fields are mandatory: city, country, currency,
+        // website and headcount are optional company details.
+        $required = ['nameComp', 'emailComp', 'phone'];
         foreach ($required as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
                 throw new \InvalidArgumentException("The field $field is required");
             }
         }
 
+        $currency = strtoupper(trim((string) ($data['currency'] ?? 'MAD')));
+        if (strlen($currency) !== 3) {
+            $currency = 'MAD';
+        }
+
         $company = new Company();
         $company->setNameComp($data['nameComp']);
         $company->setEmailComp($data['emailComp']);
         $company->setPhone($data['phone']);
-        $company->setCity($data['city']);
-        $company->setNumEmpl((int) $data['numEmpl']);
-        $company->setSiteWeb($data['siteWeb'] ?? '');
+        $company->setCity((string) ($data['city'] ?? ''));
+        $company->setNumEmpl(isset($data['numEmpl']) && $data['numEmpl'] !== '' ? (int) $data['numEmpl'] : 1);
+        $company->setSiteWeb((string) ($data['siteWeb'] ?? ''));
+        $company->setAddress($data['address'] ?? null);
+        $company->setCountry($data['country'] ?? null);
+        $company->setCurrency($currency);
         $company->setOwner($user); // the current admin is the owner
 
         $this->em->persist($company);
@@ -194,12 +204,18 @@ class CompanyService
         if (isset($data['nameComp']) || isset($data['name'])) $company->setNameComp($data['nameComp'] ?? $data['name']);
         if (isset($data['emailComp']) || isset($data['email'])) $company->setEmailComp($data['emailComp'] ?? $data['email']);
         if (isset($data['phone'])) $company->setPhone($data['phone']);
-        if (isset($data['city'])) $company->setCity($data['city']);
-        if (isset($data['numEmpl'])) $company->setNumEmpl((int) $data['numEmpl']);
-        if (isset($data['siteWeb'])) $company->setSiteWeb($data['siteWeb']);
+        if (array_key_exists('city', $data)) $company->setCity((string) $data['city']);
+        if (isset($data['numEmpl']) && $data['numEmpl'] !== '') $company->setNumEmpl((int) $data['numEmpl']);
+        if (array_key_exists('siteWeb', $data)) $company->setSiteWeb((string) $data['siteWeb']);
         if (array_key_exists('address', $data)) $company->setAddress($data['address']);
         if (array_key_exists('country', $data)) $company->setCountry($data['country']);
-        if (isset($data['currency'])) $company->setCurrency($data['currency']);
+        // An empty currency keeps the stored one: the field is optional.
+        if (!empty($data['currency'])) {
+            $currency = strtoupper(trim((string) $data['currency']));
+            if (strlen($currency) === 3) {
+                $company->setCurrency($currency);
+            }
+        }
         if (array_key_exists('logo', $data)) $company->setLogo($data['logo']);
         if (isset($data['modules']['clients'])) $company->setClientsEnabled((bool) $data['modules']['clients']);
         if (isset($data['modules']['suppliers'])) $company->setSuppliersEnabled((bool) $data['modules']['suppliers']);

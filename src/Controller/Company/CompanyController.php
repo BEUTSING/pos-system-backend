@@ -150,6 +150,8 @@ final class CompanyController extends AbstractController
                 'address' => $company->getAddress(),
                 'country' => $company->getCountry(),
                 'currency' => $company->getCurrency(),
+                'siteWeb' => $company->getSiteWeb(),
+                'numEmpl' => $company->getNumEmpl(),
                 'logo' => $this->fileUploadService->publicUrl($company->getLogo()),
                 'modules' => [
                     'clients' => $company->isClientsEnabled(),

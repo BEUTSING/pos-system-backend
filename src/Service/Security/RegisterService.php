@@ -72,7 +72,9 @@ class RegisterService
         $company->setSiteWeb($data['siteWeb'] ?? '');
         $company->setAddress($data['address'] ?? null);
         $company->setCountry($data['country'] ?? null);
-        $company->setCurrency($data['currency'] ?? 'MAD');
+        // Currency is optional: fall back to MAD when it is missing or malformed.
+        $currency = strtoupper(trim((string) ($data['currency'] ?? 'MAD')));
+        $company->setCurrency(strlen($currency) === 3 ? $currency : 'MAD');
         $company->setLogo($data['logo'] ?? null);
         $company->setOwner($user);
 
