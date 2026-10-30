@@ -68,6 +68,28 @@ final class LoginController extends AbstractController
     }
 
 
+    // Return the authenticated user and the company used by the React client.
+    #[Route('/user/me', name: 'app_user_me', methods: ['GET'])]
+    public function me(): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'Not authenticated'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $company = $user->getCompany();
+
+        return new JsonResponse([
+            'id' => $user->getId(),
+            'name' => $user->getName(),
+            'email' => $user->getEmail(),
+            'phone' => $user->getPhone(),
+            'city' => $user->getCity(),
+            'roles' => $user->getRoles(),
+            'companyId' => $company?->getId(),
+        ], Response::HTTP_OK);
+    }
+
     #[Route('/user/logout', name: 'app_logout', methods: ['POST'])]
     #[OA\Post(
         path:"/api/v1/user/logout",
