@@ -2,10 +2,13 @@
 namespace App\Service\Product;
 
 use App\Entity\Product\Product;
+use App\Entity\Product\ProductMedia;
 use App\Repository\Product\CategoryRepository;
+use App\Repository\Product\ProductMediaRepository;
 use App\Repository\Product\ProductRepository;
 use App\Repository\Stock\SupplierRepository;
 use App\Service\Company\CompanyService;
+use App\Service\Media\FileUploadService;
 
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
@@ -21,6 +24,8 @@ class ProductService
     private $security;
     private $ProductRepository;
     private $companyService;
+    private $mediaRepository;
+    private $fileUploadService;
 
     public function __construct(
         EntityManagerInterface $em,
@@ -28,7 +33,9 @@ class ProductService
         SupplierRepository $supplierrepository,
         Security $security,
         ProductRepository $repo,
-        CompanyService $companyService  // ← injected
+        CompanyService $companyService,  // ← injected
+        ProductMediaRepository $mediaRepository,
+        FileUploadService $fileUploadService
     ) {
         $this->security = $security;
         $this->ProductRepository = $repo;
@@ -36,6 +43,8 @@ class ProductService
         $this->categoryrepository = $categoryrepository;
         $this->supplierrepository = $supplierrepository;
         $this->companyService = $companyService;
+        $this->mediaRepository = $mediaRepository;
+        $this->fileUploadService = $fileUploadService;
     }
 
     // ─── SEARCH: search products by name within the current company ──────────────
@@ -76,9 +85,6 @@ class ProductService
 
         // Filter products by the current company only — not findAll()
         $products = $this->ProductRepository->findBy(['company' => $company]);
-        if (!$products) {
-            throw new RuntimeException('No products registered');
-        }
 
         $data = [];
         foreach ($products as $product) {
@@ -100,15 +106,15 @@ class ProductService
         }
 
         // Validate required fields
-        $required = ['productname', 'category', 'saleprice', 'purchaseprice', 'quantity', 'minimumstock'];
+        $required = ['productname', 'saleprice', 'purchaseprice', 'quantity', 'minimumstock'];
         foreach ($required as $field) {
             if (!isset($data[$field])) {
                 throw new \InvalidArgumentException("The field $field is required");
             }
         }
 
-        $category = $this->categoryrepository->find($data['category']);
-        if (!$category || $category->getCompany()?->getId() !== $company->getId()) {
+        $category = !empty($data['category']) ? $this->categoryrepository->find($data['category']) : null;
+        if (!empty($data['category']) && (!$category || $category->getCompany()?->getId() !== $company->getId())) {
             throw new \InvalidArgumentException('Category not found in the active company');
         }
 
@@ -141,11 +147,11 @@ class ProductService
             'reference'     => $product->getReference(),
             'description'   => $product->getDescription(),
             'unit'          => $product->getUnit(),
-            'category'      => [
+            'category'      => $product->getCategory() ? [
                 'id'          => $product->getCategory()->getId(),
                 'name'        => $product->getCategory()->getCategoryname(),
                 'description' => $product->getCategory()->getDescription(),
-            ],
+            ] : null,
             'supplier'      => $product->getSupplier() ? [
                 'id'   => $product->getSupplier()->getId(),
                 'name' => $product->getSupplier()->getName(),
@@ -157,6 +163,9 @@ class ProductService
             'company'       => $company->getNameComp(),
             'created_at'    => $product->getCreatedAt()->format('Y-m-d H:i:s'),
             'updated_at'    => $product->getUpdatedAt()->format('Y-m-d H:i:s'),
+            'picture'       => null,
+            'pictures'      => [],
+            'media'         => [],
         ]];
     }
 
@@ -171,12 +180,16 @@ class ProductService
             throw new \InvalidArgumentException('Product not found');
         }
 
-        if (isset($data['category'])) {
-            $category = $this->categoryrepository->find($data['category']);
-            if (!$category || $category->getCompany()?->getId() !== $company->getId()) {
-                throw new \InvalidArgumentException('Category not found');
+        if (array_key_exists('category', $data)) {
+            if ($data['category'] === null || $data['category'] === '') {
+                $product->setCategory(null);
+            } else {
+                $category = $this->categoryrepository->find($data['category']);
+                if (!$category || $category->getCompany()?->getId() !== $company->getId()) {
+                    throw new \InvalidArgumentException('Category not found');
+                }
+                $product->setCategory($category);
             }
-            $product->setCategory($category);
         }
 
         if (array_key_exists('supplier', $data)) {
@@ -217,6 +230,10 @@ class ProductService
             throw new \InvalidArgumentException('Product not found');
         }
 
+        foreach ($this->mediaRepository->findForProduct((int) $product->getId()) as $media) {
+            $this->fileUploadService->delete($media->getPath());
+        }
+
         $this->em->remove($product);
         $this->em->flush();
 
@@ -239,6 +256,120 @@ class ProductService
             'quantity'      => $product->getQuantity(),
             'minimumstock'  => $product->getMinimumstock(),
             'company'       => $product->getCompany()?->getNameComp(),
+            'picture'       => $this->fileUploadService->publicUrl($product->getPicture()),
+            'pictures'      => array_map(
+                fn (string $path): ?string => $this->fileUploadService->publicUrl($path),
+                $product->getPictures()
+            ),
+            'media'         => array_map(
+                fn (ProductMedia $media): array => $this->formatMedia($media),
+                $this->mediaRepository->findForProduct((int) $product->getId())
+            ),
+        ];
+    }
+
+    // ─── MEDIA: list, add, delete and promote product images ──────────────────────
+    public function listMedia(int $productId): array
+    {
+        $product = $this->findProductInCurrentCompany($productId);
+
+        return array_map(
+            fn (ProductMedia $media): array => $this->formatMedia($media),
+            $this->mediaRepository->findForProduct((int) $product->getId())
+        );
+    }
+
+    public function addMedia(int $productId, Request $request): array
+    {
+        $product = $this->findProductInCurrentCompany($productId);
+        $file = $request->files->get('image') ?? $request->files->get('file');
+        if (!$file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile) {
+            throw new \InvalidArgumentException('An image file is required in the "image" field');
+        }
+
+        $stored = $this->fileUploadService->store($file, 'products');
+        $existing = $this->mediaRepository->findForProduct((int) $product->getId());
+
+        $media = new ProductMedia();
+        $media->setProduct($product);
+        $media->setPath($stored['path']);
+        $media->setPosition(count($existing));
+        $media->setIsPrimary($existing === []);
+
+        $this->em->persist($media);
+        $this->em->flush();
+
+        return array_map(
+            fn (ProductMedia $item): array => $this->formatMedia($item),
+            $this->mediaRepository->findForProduct((int) $product->getId())
+        );
+    }
+
+    public function deleteMedia(int $productId, int $mediaId): array
+    {
+        $product = $this->findProductInCurrentCompany($productId);
+        $media = $this->mediaRepository->find($mediaId);
+        if (!$media || $media->getProduct()?->getId() !== $product->getId()) {
+            throw new \InvalidArgumentException('Image not found for this product');
+        }
+
+        $wasPrimary = $media->isPrimary();
+        $this->fileUploadService->delete($media->getPath());
+        $this->em->remove($media);
+        $this->em->flush();
+
+        if ($wasPrimary) {
+            $remaining = $this->mediaRepository->findForProduct((int) $product->getId());
+            if ($remaining !== []) {
+                $remaining[0]->setIsPrimary(true);
+                $this->em->flush();
+            }
+        }
+
+        return array_map(
+            fn (ProductMedia $item): array => $this->formatMedia($item),
+            $this->mediaRepository->findForProduct((int) $product->getId())
+        );
+    }
+
+    public function setPrimaryMedia(int $productId, int $mediaId): array
+    {
+        $product = $this->findProductInCurrentCompany($productId);
+        $target = $this->mediaRepository->find($mediaId);
+        if (!$target || $target->getProduct()?->getId() !== $product->getId()) {
+            throw new \InvalidArgumentException('Image not found for this product');
+        }
+
+        foreach ($this->mediaRepository->findForProduct((int) $product->getId()) as $media) {
+            $media->setIsPrimary($media->getId() === $target->getId());
+        }
+        $this->em->flush();
+
+        return array_map(
+            fn (ProductMedia $item): array => $this->formatMedia($item),
+            $this->mediaRepository->findForProduct((int) $product->getId())
+        );
+    }
+
+    private function findProductInCurrentCompany(int $productId): Product
+    {
+        $company = $this->companyService->getCurrentCompany();
+        $product = $this->ProductRepository->find($productId);
+        if (!$company || !$product || $product->getCompany()?->getId() !== $company->getId()) {
+            throw new \InvalidArgumentException('Product not found');
+        }
+
+        return $product;
+    }
+
+    private function formatMedia(ProductMedia $media): array
+    {
+        return [
+            'id' => $media->getId(),
+            'url' => $this->fileUploadService->publicUrl($media->getPath()),
+            'path' => $media->getPath(),
+            'is_primary' => $media->isPrimary(),
+            'position' => $media->getPosition(),
         ];
     }
 }

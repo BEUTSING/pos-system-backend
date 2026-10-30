@@ -320,6 +320,51 @@ final class ProductController extends AbstractController
             return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);  
         }
     }
+
+    // ─── MEDIA: product images ──────────────────────────────────────────────────
+    #[Route('/product/{id}/images', name: 'app_product_media_list', requirements: ['id' => '\\d+'], methods: ['GET'])]
+    #[IsGranted(attribute: 'ROLE_WAITER')]
+    public function listMedia(int $id): JsonResponse
+    {
+        try {
+            return $this->json($this->productService->listMedia($id));
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+        }
+    }
+
+    #[Route('/product/{id}/images', name: 'app_product_media_add', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+    public function addMedia(int $id, Request $request): JsonResponse
+    {
+        try {
+            return $this->json($this->productService->addMedia($id, $request), Response::HTTP_CREATED);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    #[Route('/product/{id}/images/{mediaId}', name: 'app_product_media_delete', requirements: ['id' => '\\d+', 'mediaId' => '\\d+'], methods: ['DELETE'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+    public function deleteMedia(int $id, int $mediaId): JsonResponse
+    {
+        try {
+            return $this->json($this->productService->deleteMedia($id, $mediaId));
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+        }
+    }
+
+    #[Route('/product/{id}/images/{mediaId}/primary', name: 'app_product_media_primary', requirements: ['id' => '\\d+', 'mediaId' => '\\d+'], methods: ['PUT'])]
+    #[IsGranted(attribute: 'ROLE_MANAGER')]
+    public function setPrimaryMedia(int $id, int $mediaId): JsonResponse
+    {
+        try {
+            return $this->json($this->productService->setPrimaryMedia($id, $mediaId));
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+        }
+    }
 }
 
 
