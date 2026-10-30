@@ -125,6 +125,39 @@ final class CompanyController extends AbstractController
         }
     }
 
+    // Return the active company and its frontend settings.
+    #[Route('/company/current', name: 'app_company_current', methods: ['GET'])]
+    #[IsGranted(attribute: 'ROLE_WAITER')]
+    public function current(): JsonResponse
+    {
+        try {
+            $company = $this->companyService->getCurrentCompany();
+            if (!$company) {
+                return $this->json(['error' => 'No company assigned to the authenticated user'], Response::HTTP_NOT_FOUND);
+            }
+
+            return $this->json([
+                'id' => $company->getId(),
+                'name' => $company->getNameComp(),
+                'nameComp' => $company->getNameComp(),
+                'email' => $company->getEmailComp(),
+                'emailComp' => $company->getEmailComp(),
+                'phone' => $company->getPhone(),
+                'city' => $company->getCity(),
+                'address' => $company->getAddress(),
+                'country' => $company->getCountry(),
+                'currency' => $company->getCurrency(),
+                'logo' => $company->getLogo(),
+                'modules' => [
+                    'clients' => $company->isClientsEnabled(),
+                    'suppliers' => $company->isSuppliersEnabled(),
+                ],
+            ]);
+        } catch (\RuntimeException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
+        }
+    }
+
     // Create a new company
     #[Route('/company/create', name: 'app_company_create', methods: ['POST'])]
     #[IsGranted(attribute: 'ROLE_ADMIN')]
@@ -248,6 +281,10 @@ final class CompanyController extends AbstractController
     public function update(int $id, Request $request): JsonResponse
     {
         try {
+            $company = $this->companyService->getCurrentCompany();
+            if (!$company || $company->getId() !== $id) {
+                return $this->json(['error' => 'Company not found for the authenticated user'], Response::HTTP_NOT_FOUND);
+            }
             $data = $this->companyService->updateC($id, $request);
             return $this->json($data, Response::HTTP_OK);
         } catch (\InvalidArgumentException $e) {

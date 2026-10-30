@@ -151,7 +151,8 @@ class CompanyService
         $user = $this->security->getUser();
         $data = json_decode($request->getContent(), true);
 
-        $required = ['nameComp', 'emailComp', 'phone', 'city', 'numEmpl', 'siteWeb'];
+        $data = is_array($data) ? $data : [];
+        $required = ['nameComp', 'emailComp', 'phone', 'city', 'numEmpl'];
         foreach ($required as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
                 throw new \InvalidArgumentException("The field $field is required");
@@ -163,8 +164,8 @@ class CompanyService
         $company->setEmailComp($data['emailComp']);
         $company->setPhone($data['phone']);
         $company->setCity($data['city']);
-        $company->setNumEmpl($data['numEmpl']);
-        $company->setSiteWeb($data['siteWeb']);
+        $company->setNumEmpl((int) $data['numEmpl']);
+        $company->setSiteWeb($data['siteWeb'] ?? '');
         $company->setOwner($user); // the current admin is the owner
 
         $this->em->persist($company);
@@ -190,12 +191,18 @@ class CompanyService
             throw new \RuntimeException('Access denied: you are not the owner');
         }
 
-        if (isset($data['nameComp']))  $company->setNameComp($data['nameComp']);
-        if (isset($data['emailComp'])) $company->setEmailComp($data['emailComp']);
-        if (isset($data['phone']))     $company->setPhone($data['phone']);
-        if (isset($data['city']))      $company->setCity($data['city']);
-        if (isset($data['numEmpl']))   $company->setNumEmpl($data['numEmpl']);
-        if (isset($data['siteWeb']))   $company->setSiteWeb($data['siteWeb']);
+        if (isset($data['nameComp']) || isset($data['name'])) $company->setNameComp($data['nameComp'] ?? $data['name']);
+        if (isset($data['emailComp']) || isset($data['email'])) $company->setEmailComp($data['emailComp'] ?? $data['email']);
+        if (isset($data['phone'])) $company->setPhone($data['phone']);
+        if (isset($data['city'])) $company->setCity($data['city']);
+        if (isset($data['numEmpl'])) $company->setNumEmpl((int) $data['numEmpl']);
+        if (isset($data['siteWeb'])) $company->setSiteWeb($data['siteWeb']);
+        if (array_key_exists('address', $data)) $company->setAddress($data['address']);
+        if (array_key_exists('country', $data)) $company->setCountry($data['country']);
+        if (isset($data['currency'])) $company->setCurrency($data['currency']);
+        if (array_key_exists('logo', $data)) $company->setLogo($data['logo']);
+        if (isset($data['modules']['clients'])) $company->setClientsEnabled((bool) $data['modules']['clients']);
+        if (isset($data['modules']['suppliers'])) $company->setSuppliersEnabled((bool) $data['modules']['suppliers']);
 
         $this->em->flush();
 
@@ -238,6 +245,14 @@ class CompanyService
             'city'      => $company->getCity(),
             'numEmpl'   => $company->getNumEmpl(),
             'siteWeb'   => $company->getSiteWeb(),
+            'address'   => $company->getAddress(),
+            'country'   => $company->getCountry(),
+            'currency'  => $company->getCurrency(),
+            'logo'      => $company->getLogo(),
+            'modules'   => [
+                'clients' => $company->isClientsEnabled(),
+                'suppliers' => $company->isSuppliersEnabled(),
+            ],
             'owner'     => $company->getOwner()?->getUserIdentifier(),
         ];
     }

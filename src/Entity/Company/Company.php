@@ -6,6 +6,7 @@ use App\Entity\Traits\TimestampableTrait;
 use App\Entity\Security\User;
 use App\Repository\Company\CompanyRepository;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
 
@@ -34,10 +35,28 @@ class Company
     #[ORM\Column]
     private ?int $numEmpl = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $siteWeb = null;
+    #[ORM\Column(length: 255, options: ['default' => ''])]
+    private ?string $siteWeb = '';
 
-    #[ORM\ManyToOne(inversedBy: 'Company')]
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $address = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $country = null;
+
+    #[ORM\Column(length: 3, options: ['default' => 'MAD'])]
+    private string $currency = 'MAD';
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $logo = null;
+
+    #[ORM\Column(options: ['default' => true])]
+    private bool $clientsEnabled = true;
+
+    #[ORM\Column(options: ['default' => true])]
+    private bool $suppliersEnabled = true;
+
+    #[ORM\ManyToOne(inversedBy: 'companies')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $owner = null;
   
@@ -123,6 +142,78 @@ class Company
     public function setSiteWeb(string $siteWeb): static
     {
         $this->siteWeb = $siteWeb;
+
+        return $this;
+    }
+
+    public function getAddress(): ?string
+    {
+        return $this->address;
+    }
+
+    public function setAddress(?string $address): static
+    {
+        $this->address = $address;
+
+        return $this;
+    }
+
+    public function getCountry(): ?string
+    {
+        return $this->country;
+    }
+
+    public function setCountry(?string $country): static
+    {
+        $this->country = $country;
+
+        return $this;
+    }
+
+    public function getCurrency(): string
+    {
+        return $this->currency;
+    }
+
+    public function setCurrency(string $currency): static
+    {
+        $this->currency = $currency;
+
+        return $this;
+    }
+
+    public function getLogo(): ?string
+    {
+        return $this->logo;
+    }
+
+    public function setLogo(?string $logo): static
+    {
+        $this->logo = $logo;
+
+        return $this;
+    }
+
+    public function isClientsEnabled(): bool
+    {
+        return $this->clientsEnabled;
+    }
+
+    public function setClientsEnabled(bool $clientsEnabled): static
+    {
+        $this->clientsEnabled = $clientsEnabled;
+
+        return $this;
+    }
+
+    public function isSuppliersEnabled(): bool
+    {
+        return $this->suppliersEnabled;
+    }
+
+    public function setSuppliersEnabled(bool $suppliersEnabled): static
+    {
+        $this->suppliersEnabled = $suppliersEnabled;
 
         return $this;
     }
