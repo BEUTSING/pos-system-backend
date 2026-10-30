@@ -2,6 +2,7 @@
 
 namespace App\Entity\Company;
 
+use App\Entity\Media\Logo;
 use App\Entity\Traits\TimestampableTrait;
 use App\Entity\Security\User;
 use App\Repository\Company\CompanyRepository;
@@ -63,9 +64,23 @@ class Company
     #[ORM\OneToMany(targetEntity: User::class, mappedBy: 'company')]
     private Collection $employees;
 
+    /**
+     * @var Collection<int, Logo>
+     */
+    #[ORM\OneToMany(targetEntity: Logo::class, mappedBy: 'company')]
+    private Collection $logos;
+
     public function __construct()
     {
-       $this->employees = new ArrayCollection();}
+       $this->employees = new ArrayCollection();
+       $this->logos = new ArrayCollection();
+    }
+
+    /** @return Collection<int, Logo> */
+    public function getLogos(): Collection
+    {
+        return $this->logos;
+    }
 
 
 

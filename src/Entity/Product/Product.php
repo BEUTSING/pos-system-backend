@@ -70,12 +70,72 @@ class Product
 
     #[ORM\ManyToOne(inversedBy: 'products')]
     private ?Supplier $supplier = null;
-   
+
+    /**
+     * @var Collection<int, ProductMedia>
+     */
+    #[ORM\OneToMany(targetEntity: ProductMedia::class, mappedBy: 'product', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $media;
 
     public function __construct()
     {
         $this->stockmovements = new ArrayCollection();
         $this->purchaseorders = new ArrayCollection();
+        $this->media = new ArrayCollection();
+    }
+
+    /**
+     * @return Collection<int, ProductMedia>
+     */
+    public function getMedia(): Collection
+    {
+        return $this->media;
+    }
+
+    public function addMedia(ProductMedia $media): static
+    {
+        if (!$this->media->contains($media)) {
+            $this->media->add($media);
+            $media->setProduct($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMedia(ProductMedia $media): static
+    {
+        if ($this->media->removeElement($media) && $media->getProduct() === $this) {
+            $media->setProduct(null);
+        }
+
+        return $this;
+    }
+
+    /** Primary image path, falling back to the first stored image. */
+    public function getPicture(): ?string
+    {
+        $fallback = null;
+        foreach ($this->media as $media) {
+            if ($media->isPrimary()) {
+                return $media->getPath();
+            }
+            $fallback ??= $media->getPath();
+        }
+
+        return $fallback;
+    }
+
+    /** @return string[] */
+    public function getPictures(): array
+    {
+        $pictures = [];
+        foreach ($this->media as $media) {
+            if ($media->getPath() !== null) {
+                $pictures[] = $media->getPath();
+            }
+        }
+
+        return $pictures;
     }
 
     public function getId(): ?int
