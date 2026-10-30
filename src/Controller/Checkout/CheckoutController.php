@@ -23,6 +23,31 @@ final class CheckoutController extends AbstractController
         
     }
 
+  #[Route('/orders', name: 'app_checkout_orders', methods: ['GET'])]
+  #[IsGranted(attribute: 'ROLE_WAITER')]
+  public function orders(): JsonResponse
+  {
+      try {
+          return $this->json($this->checkoutService->listOrders());
+      } catch (\RuntimeException $exception) {
+          return $this->json(['error' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
+      }
+  }
+
+  #[Route('/order/{id}', name: 'app_checkout_order_delete', requirements: ['id' => '\\d+'], methods: ['DELETE'])]
+  #[IsGranted(attribute: 'ROLE_MANAGER')]
+  public function deleteOrder(int $id): JsonResponse
+  {
+      try {
+          $this->checkoutService->deleteDraftOrder($id);
+          return $this->json(null, Response::HTTP_NO_CONTENT);
+      } catch (\InvalidArgumentException $exception) {
+          return $this->json(['error' => $exception->getMessage()], Response::HTTP_CONFLICT);
+      } catch (\RuntimeException $exception) {
+          return $this->json(['error' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
+      }
+  }
+
   #[Route('/order', name:'app_checkout_order',methods:['POST'] )]
   #[IsGranted(attribute: 'ROLE_WAITER')]
 
@@ -109,18 +134,13 @@ final class CheckoutController extends AbstractController
 
   public function Order(Request $request): JsonResponse{
     try {
-      $data= $this->checkoutService->processOrder($request);
-
-      return new jsonResponse([
-        "Succes"=>"true",
-        "message"=>$data
-      ]);
-    } catch (\Exception $e) {
-        return new JsonResponse([
-          "statut"=> "false",
-            "error" => $e->getMessage()
-        ], 400);
-      }
+      $data = $this->checkoutService->processOrder($request);
+      return new JsonResponse(['Succes' => 'true', 'message' => $data], Response::HTTP_CREATED);
+    } catch (\InvalidArgumentException $exception) {
+      return new JsonResponse(['statut' => 'false', 'error' => $exception->getMessage()], Response::HTTP_BAD_REQUEST);
+    } catch (\RuntimeException $exception) {
+      return new JsonResponse(['statut' => 'false', 'error' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
+    }
   }
 
   #[Route('/sale', name:'app_checkout_sale',methods:['POST'] )]
@@ -188,21 +208,14 @@ final class CheckoutController extends AbstractController
 
   public function sale(Request $request): JsonResponse{
       try {
-      $data= $this->checkoutService->createSaleFromOrder($request);
-
-      return new jsonResponse([
-        "Succes"=>"true",
-        "message"=>$data
-      ]);
-    } catch (\Exception $se) {
-        return new JsonResponse([
-          "statut"=> "false",
-            "error" => $se->getMessage()
-        ], 400);
+          $data = $this->checkoutService->createSaleFromOrder($request);
+          return new JsonResponse(['Succes' => 'true', 'message' => $data], Response::HTTP_CREATED);
+      } catch (\InvalidArgumentException | \RuntimeException $exception) {
+          return new JsonResponse(['statut' => 'false', 'error' => $exception->getMessage()], Response::HTTP_BAD_REQUEST);
       }
   }
 
-#[Route('/cancel', name:'cancel',methods:['POST'] )]
+  #[Route('/cancel', name:'cancel',methods:['POST'] )]
 #[IsGranted(attribute: 'ROLE_MANAGER')]
 #[OA\Post(
   path:'/api/v1/checkout/cancel',
