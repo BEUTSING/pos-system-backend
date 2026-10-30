@@ -27,6 +27,9 @@ class StatisticService
     public function getSaleStatistic(Request $request): array
     {
         $data = json_decode($request->getContent(), true);
+        if (!is_array($data) || !isset($data['period']) || !is_string($data['period'])) {
+            throw new \InvalidArgumentException('The period parameter is required');
+        }
         $period = $data['period'];
 
         $startdate = new \DateTimeImmutable();
@@ -50,7 +53,7 @@ class StatisticService
                 $startdate = $startdate->modify('first day of january this year')->setTime(0, 0, 0);
                 break;
             default:
-                return [];
+                throw new \InvalidArgumentException('Unsupported period');
         }
 
         // Automatically retrieve the current company of the authenticated user
@@ -75,7 +78,7 @@ class StatisticService
         }
 
         // Filter sales by the current company only — not findAll()
-        $sales = $this->salerepository->findBy(['company' => $company]);
+        $sales = $this->salerepository->findBy(['company' => $company], ['createdAt' => 'DESC']);
 
         return $this->formatSalesData($sales);
     }
@@ -168,9 +171,13 @@ class StatisticService
                     $totalpurchase += $purchaseprice * $quantity;
 
                     $productsInSale[] = [
+                        'order_item_id' => $orderItem->getId(),
+                        'product_id' => $orderItem->getProduct()->getId(),
                         'product_name' => $orderItem->getProduct()->getProductname(),
-                        'quantity'     => $quantity,
-                        'price'        => $saleprice,
+                        'reference' => $orderItem->getProduct()->getReference(),
+                        'quantity' => $quantity,
+                        'price' => $saleprice,
+                        'subtotal' => $saleprice * $quantity,
                     ];
                 }
 
@@ -178,12 +185,24 @@ class StatisticService
                 $profit = $totalsale - $totalpurchase;
             }
 
+            $order = $sale->getCustomerOrder();
+            $customer = $order?->getCustomer();
             $data[] = [
-                'id'           => $sale->getId(),
-                'teller'       => $sale->getTeller()->getName(),
-                'products'     => $productsInSale,
+                'id' => $sale->getId(),
+                'sale_id' => $sale->getId(),
+                'order_id' => $order?->getId(),
+                'customer_id' => $customer?->getId(),
+                'customer_name' => $customer?->getName(),
+                'teller' => $sale->getTeller()?->getName(),
+                'products' => $productsInSale,
+                'items' => $productsInSale,
+                'total_amount' => array_sum(array_column($productsInSale, 'subtotal')),
+                'payment_method' => $sale->getPaymentMethod(),
+                'is_paid' => $sale->isPaid(),
+                'statut' => $sale->getStatut(),
                 'date_created' => $sale->getCreatedAt()->format('Y-m-d H:i:s'),
-                'date_update'  => $sale->getUpdatedAt()->format('Y-m-d H:i:s'),
+                'created_at' => $sale->getCreatedAt()->format('Y-m-d H:i:s'),
+                'date_update' => $sale->getUpdatedAt()->format('Y-m-d H:i:s'),
             ];
         }
 

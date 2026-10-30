@@ -8,7 +8,6 @@ use App\Repository\Product\ProductRepository;
 use App\Repository\Stock\StockmovementRepository;
 use App\Service\Company\CompanyService;
 
-use App\Enum\ReasonMovement;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -89,6 +88,8 @@ final class StockmovementController extends AbstractController
             $data[] = [
                 'id'           => $movement->getId(),
                 'product'      => $movement->getProduct()?->getProductname(),
+                'product_id'   => $movement->getProduct()?->getId(),
+                'product_name' => $movement->getProduct()?->getProductname(),
                 'quantity'     => $movement->getQuantity(),
                 'typemovement' => $movement->getTypemovement(),
                 'reason'       => $movement->getReason(),
@@ -165,6 +166,8 @@ final class StockmovementController extends AbstractController
             $data[] = [
                 'id'           => $movement->getId(),
                 'product'      => $movement->getProduct()?->getProductname(),
+                'product_id'   => $movement->getProduct()?->getId(),
+                'product_name' => $movement->getProduct()?->getProductname(),
                 'quantity'     => $movement->getQuantity(),
                 'typemovement' => $movement->getTypemovement(),
                 'reason'       => $movement->getReason(),
@@ -253,6 +256,8 @@ final class StockmovementController extends AbstractController
             $data[] = [
                 'id'           => $movement->getId(),
                 'product'      => $movement->getProduct()?->getProductname(),
+                'product_id'   => $movement->getProduct()?->getId(),
+                'product_name' => $movement->getProduct()?->getProductname(),
                 'quantity'     => $movement->getQuantity(),
                 'typemovement' => $movement->getTypemovement(),
                 'reason'       => $movement->getReason(),
@@ -323,32 +328,36 @@ final class StockmovementController extends AbstractController
         // ← fixed: removed Stockmovement $movement from params (Doctrine tried to find it by id)
         $data = json_decode($request->getContent(), true);
 
-        $required = ['product', 'quantity', 'typemovement', 'reason'];
+        $required = ['product', 'quantity', 'typemovement'];
         foreach ($required as $field) {
-            if (empty($data[$field]) || !isset($data[$field])) {
+            if (!isset($data[$field]) || $data[$field] === '') {
                 return $this->json(['error' => "The field $field is required"], Response::HTTP_BAD_REQUEST);
             }
         }
 
         $user = $this->security->getUser();
 
-        $product = $productrepository->find($data['product']);
-        if (!$product) {
-            return $this->json(['error' => 'Product not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        // Automatically retrieve the current company of the authenticated user
         $company = $this->companyService->getCurrentCompany();
         if (!$company) {
             return $this->json(['error' => 'No company assigned to the authenticated user'], Response::HTTP_NOT_FOUND);
         }
 
-        // Validate reason against the enum
-        $allowedReason = array_column(ReasonMovement::cases(), 'value');
-        if (!in_array($data['reason'], $allowedReason)) {
-            return new JsonResponse([
-                'error' => 'Invalid reason: ' . $data['reason'] . '. Allowed reasons: ' . implode(', ', $allowedReason)
-            ], Response::HTTP_BAD_REQUEST);
+        $product = $productrepository->find((int) $data['product']);
+        if (!$product || $product->getCompany()?->getId() !== $company->getId()) {
+            return $this->json(['error' => 'Product not found in the active company'], Response::HTTP_NOT_FOUND);
+        }
+
+        if (!in_array($data['typemovement'], ['in', 'out'], true) || (int) $data['quantity'] < 1) {
+            return $this->json(['error' => 'Quantity must be positive and movement type must be in or out'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // The frontend accepts a free-text movement reason; keep a valid default when omitted.
+        $reason = trim((string) ($data['reason'] ?? ''));
+        if ($reason === '') {
+            $reason = $data['typemovement'] === 'in' ? 'purchase' : 'loss';
+        }
+        if (mb_strlen($reason) > 255) {
+            return $this->json(['error' => 'The movement reason must not exceed 255 characters'], Response::HTTP_BAD_REQUEST);
         }
 
         // Check sufficient stock for outgoing movements
@@ -362,7 +371,7 @@ final class StockmovementController extends AbstractController
         $movement->setQuantity($data['quantity']);
         $movement->setUser($user);
         $movement->setTypemovement($data['typemovement']);
-        $movement->setReason($data['reason']);
+        $movement->setReason($reason);
         $movement->setProduct($product);
         $movement->setCompany($company); // ← automatically assigned from the current session
 
@@ -392,6 +401,8 @@ final class StockmovementController extends AbstractController
             'id'           => $movement->getId(),
             'user'         => $movement->getUser()->getId(),
             'product'      => $product->getProductname(),
+            'product_id'   => $product->getId(),
+            'product_name' => $product->getProductname(),
             'quantity'     => $movement->getQuantity(),
             'typemovement' => $movement->getTypemovement(),
             'reason'       => $movement->getReason(),
@@ -455,33 +466,31 @@ final class StockmovementController extends AbstractController
     {
         $data = json_decode($request->getContent(), true); // ← fixed: Json_decode → json_decode
 
+        $company = $this->companyService->getCurrentCompany();
+        if (!$company || $movement->getCompany()?->getId() !== $company->getId()) {
+            return $this->json(['error' => 'Stock movement not found in the active company'], Response::HTTP_NOT_FOUND);
+        }
+
         if (isset($data['product'])) {
-            $product = $productrepository->find($data['product']);
-            if (!$product) {
-                return $this->json(['error' => 'Product not found'], Response::HTTP_NOT_FOUND);
+            $product = $productrepository->find((int) $data['product']);
+            if (!$product || $product->getCompany()?->getId() !== $company->getId()) {
+                return $this->json(['error' => 'Product not found in the active company'], Response::HTTP_NOT_FOUND);
             }
             $movement->setProduct($product);
         }
 
-        // Validate reason against the enum if provided
         if (isset($data['reason'])) {
-            $allowedReason = array_column(ReasonMovement::cases(), 'value');
-            if (!in_array($data['reason'], $allowedReason)) {
-                return new JsonResponse([
-                    'error' => 'Invalid reason: ' . $data['reason'] . '. Allowed reasons: ' . implode(', ', $allowedReason)
-                ], Response::HTTP_BAD_REQUEST);
+            $reason = trim((string) $data['reason']);
+            if (mb_strlen($reason) > 255) {
+                return $this->json(['error' => 'The movement reason must not exceed 255 characters'], Response::HTTP_BAD_REQUEST);
             }
-            $movement->setReason($data['reason']);
+            $movement->setReason($reason);
         }
 
         if (isset($data['quantity']))     $movement->setQuantity($data['quantity']);
         if (isset($data['typemovement'])) $movement->setTypemovement($data['typemovement']);
 
         $em->flush();
-
-        // $this->logEntryService->createLogEntry(
-        //     'Stock movement updated for product: ' . $movement->getProduct()->getProductname()
-        // );
 
         return $this->json(['message' => 'Stock movement updated successfully'], Response::HTTP_OK);
     }
@@ -514,10 +523,10 @@ final class StockmovementController extends AbstractController
     )]
     public function delete(Stockmovement $movement, EntityManagerInterface $em): JsonResponse
     {
-        // ← fixed: removed Product $product from params — not needed, get it from movement
-        // $this->logEntryService->createLogEntry(
-        //     'Stock movement deleted for product: ' . $movement->getProduct()->getProductname()
-        // );
+        $company = $this->companyService->getCurrentCompany();
+        if (!$company || $movement->getCompany()?->getId() !== $company->getId()) {
+            return $this->json(['error' => 'Stock movement not found in the active company'], Response::HTTP_NOT_FOUND);
+        }
 
         $em->remove($movement);
         $em->flush();

@@ -4,6 +4,7 @@ namespace App\Repository\Checkout;
 
 use App\Entity\Checkout\CustomerOrder;
 use App\Entity\Checkout\Sale;
+use App\Entity\Company\Company;
 use App\Entity\Product\Product;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -19,39 +20,52 @@ class SaleRepository extends ServiceEntityRepository
     }
 
 
-    public function findSalesByPeriod(\DateTimeImmutable $startdate, \DateTimeImmutable $enddate): array
+    /** @return Sale[] */
+    public function findSalesByPeriodAndCompany(\DateTimeImmutable $startdate, \DateTimeImmutable $enddate, Company $company): array
     {
         return $this->createQueryBuilder('s')
-        ->andWhere('s.createdAt BETWEEN :start AND :end')
-        ->setParameter('start', $startdate)
-        ->setParameter('end', $enddate)
-        ->getQuery()
-        ->getResult();}
-
-
-    public function findSaleByCategory(int $categoryId){
-
-        return $this->createQueryBuilder('s')
-                    ->join('s.customerOrder','co') 
-                    ->join('co.orderitems','oi') 
-                    ->join('oi.product','p') 
-                    ->join('p.category','c') 
-                    ->andWhere('c.id= :categoryId')
-                    ->setParameter('categoryId', $categoryId)
-                    ->getQuery()
-                    ->getResult();
-
+            ->andWhere('s.createdAt BETWEEN :start AND :end')
+            ->andWhere('s.company = :company')
+            ->setParameter('start', $startdate)
+            ->setParameter('end', $enddate)
+            ->setParameter('company', $company)
+            ->orderBy('s.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
     }
 
-    public function findSalebyproduct(Product $product)
+    /** @return Sale[] */
+    public function findSaleByCategoryAndCompany(int $categoryId, Company $company): array
     {
         return $this->createQueryBuilder('s')
-        ->join('s.customerOrder','co')
-        ->join('co.orderitems','oi')
-        ->andWhere('oi.product=:product')
-        ->setParameter('product', $product)
-        ->getQuery()
-        ->getResult();
+            ->join('s.customerOrder', 'co')
+            ->join('co.orderItems', 'oi')
+            ->join('oi.product', 'p')
+            ->join('p.category', 'c')
+            ->andWhere('c.id = :categoryId')
+            ->andWhere('s.company = :company')
+            ->setParameter('categoryId', $categoryId)
+            ->setParameter('company', $company)
+            ->distinct()
+            ->orderBy('s.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /** @return Sale[] */
+    public function findSaleByProductAndCompany(Product $product, Company $company): array
+    {
+        return $this->createQueryBuilder('s')
+            ->join('s.customerOrder', 'co')
+            ->join('co.orderItems', 'oi')
+            ->andWhere('oi.product = :product')
+            ->andWhere('s.company = :company')
+            ->setParameter('product', $product)
+            ->setParameter('company', $company)
+            ->distinct()
+            ->orderBy('s.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
     }
 
     //    /**

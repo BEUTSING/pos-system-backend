@@ -79,7 +79,19 @@ final class CategoryController extends AbstractController
     )]
     public function search(CategoryRepository $repo, string $cname): JsonResponse
     {
-        $categories = $repo->findCategory($cname);
+        $company = $this->companyService->getCurrentCompany();
+        if (!$company) {
+            return $this->json([], Response::HTTP_OK);
+        }
+
+        $categories = $repo->createQueryBuilder('c')
+            ->andWhere('c.categoryname LIKE :name')
+            ->andWhere('c.company = :company')
+            ->setParameter('name', '%' . $cname . '%')
+            ->setParameter('company', $company)
+            ->orderBy('c.id', 'ASC')
+            ->getQuery()
+            ->getResult();
         if (!$categories) {
             return $this->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
         }
@@ -144,9 +156,6 @@ final class CategoryController extends AbstractController
 
         // Filter categories by the current company only — not findAll()
         $categories = $this->categoryRepository->findBy(['company' => $company]);
-        if (!$categories) {
-            return $this->json(['Status' => 'No categories registered'], Response::HTTP_NOT_FOUND);
-        }
 
         $data = [];
         foreach ($categories as $category) {
@@ -210,11 +219,12 @@ final class CategoryController extends AbstractController
         $user = $this->security->getUser();
         $data = json_decode($request->getContent(), true);
 
-        $required = ['categoryname', 'description'];
-        foreach ($required as $field) {
-            if (empty($data[$field]) || !isset($data[$field])) {
-                return $this->json(['error' => "The field $field is required"], Response::HTTP_BAD_REQUEST);
-            }
+        if (!is_array($data) || !isset($data['categoryname']) || !is_string($data['categoryname']) || trim($data['categoryname']) === '') {
+            return $this->json(['error' => 'The field categoryname is required'], Response::HTTP_BAD_REQUEST);
+        }
+        $description = $data['description'] ?? '';
+        if (!is_string($description)) {
+            return $this->json(['error' => 'The field description must be a string'], Response::HTTP_BAD_REQUEST);
         }
 
         // Automatically retrieve the current company of the authenticated user
@@ -224,8 +234,8 @@ final class CategoryController extends AbstractController
         }
 
         $categorie = new Category();
-        $categorie->setCategoryname($data['categoryname']);
-        $categorie->setDescription($data['description']);
+        $categorie->setCategoryname(trim($data['categoryname']));
+        $categorie->setDescription($description);
         $categorie->setCompany($company); // ← automatically assigned from the current session
 
         $emi->persist($categorie);
@@ -288,12 +298,29 @@ final class CategoryController extends AbstractController
             )
         ]
     )]
-    public function update(Category $categorie, Request $request, EntityManagerInterface $emi): JsonResponse
+    public function update(int $id, Request $request, EntityManagerInterface $emi): JsonResponse
     {
+        $company = $this->companyService->getCurrentCompany();
+        $categorie = $company ? $this->categoryRepository->findOneBy(['id' => $id, 'company' => $company]) : null;
+        if (!$categorie) {
+            return $this->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        }
         $data = json_decode($request->getContent(), true);
-
-        $categorie->setCategoryname($data['categoryname'] ?? $categorie->getCategoryname());
-        $categorie->setDescription($data['description'] ?? $categorie->getDescription());
+        if (!is_array($data)) {
+            return $this->json(['error' => 'Invalid JSON body'], Response::HTTP_BAD_REQUEST);
+        }
+        if (isset($data['categoryname'])) {
+            if (!is_string($data['categoryname']) || trim($data['categoryname']) === '') {
+                return $this->json(['error' => 'The field categoryname must be a non-empty string'], Response::HTTP_BAD_REQUEST);
+            }
+            $categorie->setCategoryname(trim($data['categoryname']));
+        }
+        if (array_key_exists('description', $data)) {
+            if (!is_string($data['description'])) {
+                return $this->json(['error' => 'The field description must be a string'], Response::HTTP_BAD_REQUEST);
+            }
+            $categorie->setDescription($data['description']);
+        }
 
         $emi->flush();
 
@@ -329,8 +356,13 @@ final class CategoryController extends AbstractController
             )
         ]
     )]
-    public function delete(Category $categorie, EntityManagerInterface $emi): JsonResponse
+    public function delete(int $id, EntityManagerInterface $emi): JsonResponse
     {
+        $company = $this->companyService->getCurrentCompany();
+        $categorie = $company ? $this->categoryRepository->findOneBy(['id' => $id, 'company' => $company]) : null;
+        if (!$categorie) {
+            return $this->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
+        }
         $emi->remove($categorie);
         $emi->flush();
 

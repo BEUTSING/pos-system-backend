@@ -74,7 +74,7 @@ final class StatisticController extends AbstractController
 
     // ─── ALL: get all sales of the current company ────────────────────────────────
     #[Route('/all', name: 'app_statistic_all', methods: ['GET'])]
-    #[IsGranted(attribute: 'ROLE_MANAGER')]
+    #[IsGranted(attribute: 'ROLE_TELLER')]
     #[OA\Get(
         path: "/api/v1/sale_history/all",
         summary: "Get all sales",

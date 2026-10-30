@@ -2,6 +2,7 @@
 
 namespace App\Service\Security;
 
+use App\Entity\Company\Company;
 use App\Entity\Security\User;
 use App\Repository\Security\UserRepository;
 use App\Service\Company\CompanyService;
@@ -34,7 +35,7 @@ class RegisterService
     {
         $data = json_decode($request->getContent(), true);
 
-        $required = ['name', 'phone', 'city', 'color', 'email', 'password'];
+        $required = ['name', 'phone', 'city', 'color', 'email', 'password', 'companyName'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
                 throw new \InvalidArgumentException('The field ' . $field . ' is required');
@@ -50,9 +51,7 @@ class RegisterService
             throw new RuntimeException('this user already exists');
         }
 
-        // Get the active company from X-Company-Id header (if any)
-        // For the FIRST admin registration, no company exists yet, so this is optional
-        $company = $this->companyService->getCurrentCompany();
+        $company = null;
 
         $user = new User();
         $user->setName($data['name']);
@@ -62,14 +61,23 @@ class RegisterService
         $user->setEmail($data['email']);
         $user->setRoles(['ROLE_ADMIN']);
         
-        // Assign company if one is active (for subsequent admins)
-        if ($company) {
-            $user->setCompany($company);
-        }
-        
         $user->setPassword($this->passwordHasher->hashPassword($user, $data['password']));
 
+        $company = new Company();
+        $company->setNameComp($data['companyName']);
+        $company->setEmailComp($data['companyEmail'] ?? $data['email']);
+        $company->setPhone($data['phone']);
+        $company->setCity($data['city']);
+        $company->setNumEmpl(1);
+        $company->setSiteWeb($data['siteWeb'] ?? '');
+        $company->setAddress($data['address'] ?? null);
+        $company->setCountry($data['country'] ?? null);
+        $company->setCurrency($data['currency'] ?? 'MAD');
+        $company->setLogo($data['logo'] ?? null);
+        $company->setOwner($user);
+
         $this->em->persist($user);
+        $this->em->persist($company);
         $this->em->flush();
 
         return [
@@ -80,7 +88,20 @@ class RegisterService
             'color'   => $user->getColor(),
             'email'   => $user->getEmail(),
             'roles'   => $user->getRoles(),
-            'company' => $company?->getNameComp(),
+            'company' => $company->getNameComp(),
+            'companyId' => $company->getId(),
+            'companyData' => [
+                'id' => $company->getId(),
+                'name' => $company->getNameComp(),
+                'email' => $company->getEmailComp(),
+                'phone' => $company->getPhone(),
+                'city' => $company->getCity(),
+                'country' => $company->getCountry(),
+                'address' => $company->getAddress(),
+                'logo' => $company->getLogo(),
+                'currency' => $company->getCurrency(),
+                'modules' => ['clients' => true, 'suppliers' => true],
+            ],
         ];
     }
 }

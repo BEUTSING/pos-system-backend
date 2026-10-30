@@ -27,6 +27,7 @@ class CustomerService
         $customer->setPhone($data['phone'] ?? null);
         $customer->setCity($data['city'] ?? null);
         $customer->setEmail($data['email'] ?? null);
+        $customer->setAddress($data['address'] ?? null);
         $customer->setCompany($this->getCurrentCompany());
 
         $this->entityManager->persist($customer);
@@ -77,7 +78,7 @@ class CustomerService
             throw new \InvalidArgumentException('At least one customer field must be provided');
         }
 
-        foreach (['name' => 'setName', 'phone' => 'setPhone', 'city' => 'setCity', 'email' => 'setEmail'] as $field => $setter) {
+        foreach (['name' => 'setName', 'phone' => 'setPhone', 'city' => 'setCity', 'email' => 'setEmail', 'address' => 'setAddress'] as $field => $setter) {
             if (array_key_exists($field, $data)) {
                 $customer->$setter($data[$field]);
             }
@@ -138,7 +139,7 @@ class CustomerService
         }
 
         $data = get_object_vars($data);
-        $limits = ['name' => 100, 'phone' => 20, 'city' => 100, 'email' => 180];
+        $limits = ['name' => 100, 'phone' => 20, 'city' => 100, 'email' => 180, 'address' => 255];
         $validated = [];
         foreach ($limits as $field => $maxLength) {
             if (!array_key_exists($field, $data)) {
@@ -181,6 +182,7 @@ class CustomerService
             'phone' => $customer->getPhone(),
             'city' => $customer->getCity(),
             'email' => $customer->getEmail(),
+            'address' => $customer->getAddress(),
         ];
     }
 }

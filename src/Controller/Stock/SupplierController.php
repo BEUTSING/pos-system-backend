@@ -32,7 +32,7 @@ final class SupplierController extends AbstractController
 
     // ─── LIST: retrieve all suppliers of the current company ─────────────────────
     #[Route('/list', name: 'app_supplier_display', methods: ['GET'])]
-    #[IsGranted(attribute: 'ROLE_MANAGER')]
+    #[IsGranted(attribute: 'ROLE_WAITER')]
     #[OA\Get(
         path: "/api/v1/supplier/list",
         summary: "List all suppliers",
@@ -75,10 +75,6 @@ final class SupplierController extends AbstractController
 
         // Filter suppliers by the current company only — not findAll()
         $suppliers = $supplierRepository->findBy(['company' => $company]);
-        if (!$suppliers) {
-            return $this->json(['Status' => 'No suppliers found'], Response::HTTP_NOT_FOUND);
-        }
-
         $data = [];
         foreach ($suppliers as $supplier) {
             $data[] = [
@@ -87,6 +83,7 @@ final class SupplierController extends AbstractController
                 'email'   => $supplier->getEmail(),
                 'city'    => $supplier->getCity(),
                 'phone'   => $supplier->getPhone(),
+                'address' => $supplier->getAddress(),
                 'company' => $supplier->getCompany()?->getNameComp(),
             ];
         }
@@ -139,11 +136,18 @@ final class SupplierController extends AbstractController
     )]
     public function search(SupplierRepository $supplierRepository, string $sname): JsonResponse
     {
-        $suppliers = $supplierRepository->findsupplier($sname);
-        if (!$suppliers) {
-            return $this->json(['error' => 'Supplier not found'], Response::HTTP_NOT_FOUND);
+        $company = $this->companyService->getCurrentCompany();
+        if (!$company) {
+            return $this->json([], Response::HTTP_OK);
         }
-
+        $suppliers = $supplierRepository->createQueryBuilder('s')
+            ->andWhere('s.name LIKE :name')
+            ->andWhere('s.company = :company')
+            ->setParameter('name', '%' . $sname . '%')
+            ->setParameter('company', $company)
+            ->orderBy('s.id', 'ASC')
+            ->getQuery()
+            ->getResult();
         $data = [];
         foreach ($suppliers as $supplier) {
             $data[] = [
@@ -152,6 +156,7 @@ final class SupplierController extends AbstractController
                 'email'   => $supplier->getEmail(),
                 'city'    => $supplier->getCity(),
                 'phone'   => $supplier->getPhone(),
+                'address' => $supplier->getAddress(),
                 'company' => $supplier->getCompany()?->getNameComp(),
             ];
         }
@@ -205,12 +210,16 @@ final class SupplierController extends AbstractController
     public function create(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-
-        $required = ['name', 'email', 'city', 'phone'];
-        foreach ($required as $field) {
-            if (empty($data[$field]) || !isset($data[$field])) {
-                return $this->json(['error' => "The field $field is required"], Response::HTTP_BAD_REQUEST);
+        if (!is_array($data) || !isset($data['name']) || !is_string($data['name']) || trim($data['name']) === '') {
+            return $this->json(['error' => 'The field name is required'], Response::HTTP_BAD_REQUEST);
+        }
+        foreach (['email', 'city', 'phone', 'address'] as $field) {
+            if (isset($data[$field]) && !is_string($data[$field])) {
+                return $this->json(['error' => sprintf('The field %s must be a string', $field)], Response::HTTP_BAD_REQUEST);
             }
+        }
+        if (!empty($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            return $this->json(['error' => 'The email is not valid'], Response::HTTP_BAD_REQUEST);
         }
 
         // Automatically retrieve the current company of the authenticated user
@@ -220,10 +229,11 @@ final class SupplierController extends AbstractController
         }
 
         $supplier = new Supplier();
-        $supplier->setName($data['name']);
-        $supplier->setEmail($data['email']);
-        $supplier->setCity($data['city']);
-        $supplier->setPhone($data['phone']);
+        $supplier->setName(trim($data['name']));
+        $supplier->setEmail($data['email'] ?? null);
+        $supplier->setCity($data['city'] ?? null);
+        $supplier->setPhone($data['phone'] ?? null);
+        $supplier->setAddress($data['address'] ?? null);
         $supplier->setCompany($company); // ← automatically assigned from the current session
 
         $em->persist($supplier);
@@ -237,6 +247,7 @@ final class SupplierController extends AbstractController
             'email'   => $supplier->getEmail(),
             'city'    => $supplier->getCity(),
             'phone'   => $supplier->getPhone(),
+            'address' => $supplier->getAddress(),
             'company' => $company->getNameComp(),
         ], Response::HTTP_CREATED);
     }
@@ -284,14 +295,33 @@ final class SupplierController extends AbstractController
             )
         ]
     )]
-    public function update(Supplier $supplier, Request $request, EntityManagerInterface $em): JsonResponse
+    public function update(int $id, Request $request, EntityManagerInterface $em): JsonResponse
     {
+        $company = $this->companyService->getCurrentCompany();
+        $supplier = $company ? $em->getRepository(Supplier::class)->findOneBy(['id' => $id, 'company' => $company]) : null;
+        if (!$supplier) {
+            return $this->json(['error' => 'Supplier not found'], Response::HTTP_NOT_FOUND);
+        }
         $data = json_decode($request->getContent(), true);
-
-        $supplier->setName($data['name']   ?? $supplier->getName());
-        $supplier->setEmail($data['email'] ?? $supplier->getEmail());
-        $supplier->setCity($data['city']   ?? $supplier->getCity());
-        $supplier->setPhone($data['phone'] ?? $supplier->getPhone());
+        if (!is_array($data)) {
+            return $this->json(['error' => 'Invalid JSON body'], Response::HTTP_BAD_REQUEST);
+        }
+        foreach (['name', 'email', 'city', 'phone', 'address'] as $field) {
+            if (array_key_exists($field, $data) && $data[$field] !== null && !is_string($data[$field])) {
+                return $this->json(['error' => sprintf('The field %s must be a string or null', $field)], Response::HTTP_BAD_REQUEST);
+            }
+        }
+        if (isset($data['name']) && trim($data['name']) === '') {
+            return $this->json(['error' => 'The field name must not be empty'], Response::HTTP_BAD_REQUEST);
+        }
+        if (isset($data['email']) && $data['email'] !== '' && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            return $this->json(['error' => 'The email is not valid'], Response::HTTP_BAD_REQUEST);
+        }
+        $supplier->setName($data['name'] ?? $supplier->getName());
+        $supplier->setEmail($data['email'] ?? null);
+        $supplier->setCity($data['city'] ?? null);
+        $supplier->setPhone($data['phone'] ?? null);
+        $supplier->setAddress($data['address'] ?? null);
 
         $em->flush();
 
@@ -326,8 +356,13 @@ final class SupplierController extends AbstractController
             )
         ]
     )]
-    public function delete(Supplier $supplier, EntityManagerInterface $em): JsonResponse
+    public function delete(int $id, EntityManagerInterface $em): JsonResponse
     {
+        $company = $this->companyService->getCurrentCompany();
+        $supplier = $company ? $em->getRepository(Supplier::class)->findOneBy(['id' => $id, 'company' => $company]) : null;
+        if (!$supplier) {
+            return $this->json(['error' => 'Supplier not found'], Response::HTTP_NOT_FOUND);
+        }
         $em->remove($supplier);
         $em->flush();
 

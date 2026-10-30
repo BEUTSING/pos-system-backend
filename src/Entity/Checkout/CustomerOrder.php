@@ -26,18 +26,22 @@ class CustomerOrder
      * @var Collection<int, OrderItem>
      */
     #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'customerOrder', orphanRemoval: true)]
-    private Collection $orderitems;
+    private Collection $orderItems;
 
     #[ORM\ManyToOne(inversedBy: 'customerOrders')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $waiter = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Customer $customer = null;
 
     #[ORM\OneToOne(mappedBy: 'customerOrder', cascade: ['persist', 'remove'])]
     private ?Sale $sale = null;
 
     public function __construct()
     {
-        $this->orderitems = new ArrayCollection();
+        $this->orderItems = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -50,13 +54,13 @@ class CustomerOrder
      */
     public function getOrderItems(): Collection
     {
-        return $this->orderitems;
+        return $this->orderItems;
     }
 
     public function addOrderItem(OrderItem $orderitem): static
     {
-        if (!$this->orderitems->contains($orderitem)) {
-            $this->orderitems->add($orderitem);
+        if (!$this->orderItems->contains($orderitem)) {
+            $this->orderItems->add($orderitem);
             $orderitem->setCustomerOrder($this);
         }
 
@@ -65,7 +69,7 @@ class CustomerOrder
 
     public function removeOrderItem(OrderItem $orderitem): static
     {
-        if ($this->orderitems->removeElement($orderitem)) {
+        if ($this->orderItems->removeElement($orderitem)) {
             // set the owning side to null (unless already changed)
             if ($orderitem->getCustomerOrder() === $this) {
                 $orderitem->setCustomerOrder(null);
@@ -83,6 +87,18 @@ class CustomerOrder
     public function setWaiter(?User $waiter): static
     {
         $this->waiter = $waiter;
+
+        return $this;
+    }
+
+    public function getCustomer(): ?Customer
+    {
+        return $this->customer;
+    }
+
+    public function setCustomer(?Customer $customer): static
+    {
+        $this->customer = $customer;
 
         return $this;
     }

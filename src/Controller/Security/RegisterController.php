@@ -80,9 +80,7 @@ final class RegisterController extends AbstractController
 
         $user = $this->registerService->register($request);
 
-        return new JsonResponse([$user,
-            'status' => 'User created successfully',
-        ], Response::HTTP_CREATED);
+        return new JsonResponse([...$user, 'status' => 'User created successfully'], Response::HTTP_CREATED);
 
     } catch (\InvalidArgumentException $e) {
         return new JsonResponse(

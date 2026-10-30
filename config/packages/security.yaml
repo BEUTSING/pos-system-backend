@@ -47,30 +47,30 @@ security:
         - { path: ^/api/v1/(login|token/refresh), roles: PUBLIC_ACCESS }
         
         # Routes statistic
-        - { path: ^/sale_history, roles: ROLE_TELLER }
+        - { path: ^/api/v1/sale_history, roles: ROLE_TELLER }
         
         # Routes checkout
-        - { path: ^/checkout/order, roles: ROLE_WAITER }
-        - { path: ^/checkout/add, roles: ROLE_WAITER }
-        - { path: ^/checkout/sale, roles: ROLE_TELLER }
-        - { path: ^/checkout/cancel, roles: ROLE_MANAGER }
-        - { path: ^/checkout/cancelsale, roles: ROLE_MANAGER }
+        - { path: ^/api/v1/checkout/orders$, roles: ROLE_WAITER }
+        - { path: ^/api/v1/checkout/order$, roles: ROLE_WAITER }
+        - { path: ^/api/v1/checkout/sale$, roles: ROLE_TELLER }
+        - { path: ^/api/v1/checkout/cancel$, roles: ROLE_MANAGER }
+        - { path: ^/api/v1/checkout/cancelsale$, roles: ROLE_MANAGER }
+        - { path: ^/api/v1/checkout/order/\d+$, roles: ROLE_MANAGER }
         
         # Routes checkout
-        - { path: ^/stock_movement,  roles: ROLE_MANAGER }                
+        - { path: ^/api/v1/stock-movement, roles: ROLE_MANAGER }
         
         # Routes user
-        - { path:  ^/api/v1/company,  roles: ROLE_ADMIN}
+        - { path: ^/api/v1/company/current$, roles: ROLE_WAITER }
+        - { path: ^/api/v1/company, roles: ROLE_ADMIN }
         
         # Routes category
-        - { path: ^/category,  roles: ROLE_MANAGER}
+        - { path: ^/api/v1/category, roles: ROLE_WAITER }
         
         # Routes product
-        - { path: ^/product,  roles: ROLE_MANAGER}
+        - { path: ^/api/v1/product, roles: ROLE_MANAGER }
 
         # Routes supplier
-        - { path: ^/supplier,  roles: ROLE_MANAGER}
-        # route company
-        - { path: ^/company,  roles: ROLE_ADMIN}
+        - { path: ^/api/v1/supplier, roles: ROLE_WAITER }
 
         - { path: ^/api/v1,   roles: IS_AUTHENTICATED_FULLY }

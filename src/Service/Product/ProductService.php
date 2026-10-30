@@ -41,7 +41,18 @@ class ProductService
     // ─── SEARCH: search products by name within the current company ──────────────
     public function searchP(string $pname): array
     {
-        $products = $this->ProductRepository->findProduct($pname);
+        $company = $this->companyService->getCurrentCompany();
+        if (!$company) {
+            throw new RuntimeException('No company assigned to the authenticated user');
+        }
+        $products = $this->ProductRepository->createQueryBuilder('p')
+            ->where('p.company = :company')
+            ->andWhere('p.productname LIKE :name')
+            ->setParameter('company', $company)
+            ->setParameter('name', '%' . $pname . '%')
+            ->orderBy('p.id', 'ASC')
+            ->getQuery()
+            ->getResult();
         if (!$products) {
             throw new \InvalidArgumentException('Product not found');
         }
@@ -97,14 +108,20 @@ class ProductService
         }
 
         $category = $this->categoryrepository->find($data['category']);
-        if (!$category) {
-            throw new \RuntimeException('Category not found');
+        if (!$category || $category->getCompany()?->getId() !== $company->getId()) {
+            throw new \InvalidArgumentException('Category not found in the active company');
         }
 
-        $supplier = $data['supplier'] ? $this->supplierrepository->find($data['supplier']) : null;
+        $supplier = !empty($data['supplier']) ? $this->supplierrepository->find($data['supplier']) : null;
+        if ($supplier && $supplier->getCompany()?->getId() !== $company->getId()) {
+            throw new \InvalidArgumentException('Supplier not found in the active company');
+        }
 
         $product = new Product();
         $product->setProductname($data['productname']);
+        $product->setReference($data['reference'] ?? null);
+        $product->setDescription($data['description'] ?? null);
+        $product->setUnit($data['unit'] ?? 'pcs');
         $product->setCategory($category);
         $product->setSupplier($supplier);
         $product->setSaleprice($data['saleprice']);
@@ -121,6 +138,9 @@ class ProductService
         return [[
             'id'            => $product->getId(),
             'productname'   => $product->getProductname(),
+            'reference'     => $product->getReference(),
+            'description'   => $product->getDescription(),
+            'unit'          => $product->getUnit(),
             'category'      => [
                 'id'          => $product->getCategory()->getId(),
                 'name'        => $product->getCategory()->getCategoryname(),
@@ -145,22 +165,23 @@ class ProductService
     {
         $data = json_decode($request->getContent(), true);
 
+        $company = $this->companyService->getCurrentCompany();
         $product = $this->ProductRepository->find($id);
-        if (!$product) {
+        if (!$company || !$product || $product->getCompany()?->getId() !== $company->getId()) {
             throw new \InvalidArgumentException('Product not found');
         }
 
         if (isset($data['category'])) {
             $category = $this->categoryrepository->find($data['category']);
-            if (!$category) {
+            if (!$category || $category->getCompany()?->getId() !== $company->getId()) {
                 throw new \InvalidArgumentException('Category not found');
             }
             $product->setCategory($category);
         }
 
-        if (isset($data['supplier'])) {
-            $supplier = $this->supplierrepository->find($data['supplier']);
-            if (!$supplier) {
+        if (array_key_exists('supplier', $data)) {
+            $supplier = $data['supplier'] ? $this->supplierrepository->find($data['supplier']) : null;
+            if ($data['supplier'] && (!$supplier || $supplier->getCompany()?->getId() !== $company->getId())) {
                 throw new \InvalidArgumentException('Supplier not found');
             }
             $product->setSupplier($supplier);
@@ -174,6 +195,9 @@ class ProductService
         }
 
         if (isset($data['productname']))   $product->setProductname($data['productname']);
+        if (array_key_exists('reference', $data)) $product->setReference($data['reference']);
+        if (array_key_exists('description', $data)) $product->setDescription($data['description']);
+        if (isset($data['unit'])) $product->setUnit($data['unit']);
         if (isset($data['quantity']))      $product->setQuantity($data['quantity']);
         if (isset($data['minimumstock']))  $product->setMinimumstock($data['minimumstock']);
         if (isset($data['saleprice']))     $product->setSaleprice($data['saleprice']);
@@ -181,23 +205,20 @@ class ProductService
 
         $this->em->flush();
 
-        $this->logEntryService->createLogEntry('Product updated: ' . $product->getProductname());
-
         return ['message' => 'Product updated successfully'];
     }
 
     // ─── DELETE: remove a product by ID ─────────────────────────────────────────
     public function deleteP(int $id): string
     {
+        $company = $this->companyService->getCurrentCompany();
         $product = $this->ProductRepository->find($id);
-        if (!$product) {
+        if (!$company || !$product || $product->getCompany()?->getId() !== $company->getId()) {
             throw new \InvalidArgumentException('Product not found');
         }
 
         $this->em->remove($product);
         $this->em->flush();
-
-        $this->logEntryService->createLogEntry('Product deleted: ' . $product->getProductname());
 
         return 'Product deleted successfully';
     }
@@ -208,6 +229,9 @@ class ProductService
         return [
             'id'            => $product->getId(),
             'productname'   => $product->getProductname(),
+            'reference'     => $product->getReference(),
+            'description'   => $product->getDescription(),
+            'unit'          => $product->getUnit(),
             'category'      => $product->getCategory()?->getCategoryname(),
             'supplier'      => $product->getSupplier()?->getName(),
             'saleprice'     => $product->getSaleprice(),
