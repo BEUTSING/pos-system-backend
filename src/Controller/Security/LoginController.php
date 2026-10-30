@@ -77,7 +77,8 @@ final class LoginController extends AbstractController
             return new JsonResponse(['error' => 'Not authenticated'], Response::HTTP_UNAUTHORIZED);
         }
 
-        $company = $user->getCompany();
+        // The owning company is not stored on the employee relation at signup.
+        $company = $user->getCompany() ?? $user->getCompanies()->first() ?: null;
 
         return new JsonResponse([
             'id' => $user->getId(),
