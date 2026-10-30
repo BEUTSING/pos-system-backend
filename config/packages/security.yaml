@@ -62,7 +62,14 @@ security:
         
         # Routes user
         - { path: ^/api/v1/company/current$, roles: ROLE_WAITER }
+        - { path: ^/api/v1/company/logo$, roles: ROLE_WAITER }
         - { path: ^/api/v1/company, roles: ROLE_ADMIN }
+
+        # Routes facturation
+        - { path: ^/api/v1/invoice, roles: ROLE_WAITER }
+
+        # Routes images clients
+        - { path: ^/api/v1/customer, roles: ROLE_WAITER }
         
         # Routes category
         - { path: ^/api/v1/category, roles: ROLE_WAITER }

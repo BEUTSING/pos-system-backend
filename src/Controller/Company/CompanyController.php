@@ -3,6 +3,7 @@
 namespace App\Controller\Company;
 
 use App\Service\Company\CompanyService;
+use App\Service\Media\FileUploadService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,8 +15,10 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Company')]
 final class CompanyController extends AbstractController
 {
-    public function __construct(private CompanyService $companyService)
-    {
+    public function __construct(
+        private CompanyService $companyService,
+        private FileUploadService $fileUploadService,
+    ) {
     }
 
     // Search company by name
@@ -147,7 +150,7 @@ final class CompanyController extends AbstractController
                 'address' => $company->getAddress(),
                 'country' => $company->getCountry(),
                 'currency' => $company->getCurrency(),
-                'logo' => $company->getLogo(),
+                'logo' => $this->fileUploadService->publicUrl($company->getLogo()),
                 'modules' => [
                     'clients' => $company->isClientsEnabled(),
                     'suppliers' => $company->isSuppliersEnabled(),

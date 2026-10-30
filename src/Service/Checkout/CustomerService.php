@@ -6,6 +6,7 @@ use App\Entity\Checkout\Customer;
 use App\Entity\Company\Company;
 use App\Repository\Checkout\CustomerRepository;
 use App\Service\Company\CompanyService;
+use App\Service\Media\FileUploadService;
 use Doctrine\ORM\EntityManagerInterface;
 use JsonException;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,6 +17,7 @@ class CustomerService
         private CustomerRepository $customerRepository,
         private EntityManagerInterface $entityManager,
         private CompanyService $companyService,
+        private FileUploadService $fileUploadService,
     ) {
     }
 
@@ -183,6 +185,7 @@ class CustomerService
             'city' => $customer->getCity(),
             'email' => $customer->getEmail(),
             'address' => $customer->getAddress(),
+            'picture' => $this->fileUploadService->publicUrl($customer->getPicture()),
         ];
     }
 }
