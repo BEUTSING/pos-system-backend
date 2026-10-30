@@ -27,8 +27,16 @@ class Product
     private ?int $id = null;
 
     #[ORM\Column(length: 255, unique: true)]
-
     private ?string $productname = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $reference = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $description = null;
+
+    #[ORM\Column(length: 30, options: ['default' => 'pcs'])]
+    private string $unit = 'pcs';
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     private ?string $purchaseprice = null;
@@ -83,6 +91,42 @@ class Product
     public function setProductname(string $productname): static
     {
         $this->productname = $productname;
+
+        return $this;
+    }
+
+    public function getReference(): ?string
+    {
+        return $this->reference;
+    }
+
+    public function setReference(?string $reference): static
+    {
+        $this->reference = $reference;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): static
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    public function getUnit(): string
+    {
+        return $this->unit;
+    }
+
+    public function setUnit(string $unit): static
+    {
+        $this->unit = $unit;
 
         return $this;
     }
